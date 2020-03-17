@@ -226,16 +226,16 @@ int main(int argc, const char *argv[]) {
   // printf("\"goodBlockRatePercent\": %d,\n", (int)((data_in[64]<<8)+data_in[65]));
   printf("\"goodBlockRatePercent\": %2.2f,\n", (float)((float)((int)((data_in[64]<<8)+data_in[65]))/100));
 
-  printf("\"totalEreaseCount\": %ld,\n", (long)((data_in[80]<<24)+(data_in[81]<<16)+(data_in[82]<<8)+data_in[83]));
+  printf("\"totalEraseCount\": %ld,\n", (long)((data_in[80]<<24)+(data_in[81]<<16)+(data_in[82]<<8)+data_in[83]));
 
   // printf("\"enduranceRemainLifePercentBytes\": [\"0x%02x\",\"0x%02x\"],\n", data_in[96], data_in[97]);
   // printf("\"enduranceRemainLifePercent\": %d,\n", (int)((data_in[96]<<8)+data_in[97]));
   printf("\"enduranceRemainLifePercent\": %2.2f,\n", (float)((float)((int)((data_in[96]<<8)+data_in[97]))/100));
 
 
-  printf("\"avgEreaseCount\": %ld,\n", (long)((data_in[104]<<24)+(data_in[105]<<16)+(data_in[98]<<8)+data_in[99]));
-  printf("\"minEreaseCount\": %ld,\n", (long)((data_in[106]<<24)+(data_in[107]<<16)+(data_in[100]<<8)+data_in[101]));
-  printf("\"maxEreaseCount\": %ld,\n", (long)((data_in[108]<<24)+(data_in[109]<<16)+(data_in[102]<<8)+data_in[103]));
+  printf("\"avgEraseCount\": %ld,\n", (long)((data_in[104]<<24)+(data_in[105]<<16)+(data_in[98]<<8)+data_in[99]));
+  printf("\"minEraseCount\": %ld,\n", (long)((data_in[106]<<24)+(data_in[107]<<16)+(data_in[100]<<8)+data_in[101]));
+  printf("\"maxEraseCount\": %ld,\n", (long)((data_in[108]<<24)+(data_in[109]<<16)+(data_in[102]<<8)+data_in[103]));
 
   printf("\"powerUpCount\": %ld,\n", (long)((data_in[112]<<24)+(data_in[113]<<16)+(data_in[114]<<8)+data_in[115]));
   printf("\"abnormalPowerOffCount\": %d,\n", (int)((data_in[128]<<8)+data_in[129]));
