@@ -1,0 +1,10 @@
+build
+buildwithdocker.sh
+.gitattributes
+.gitignore
+.gitmodules
+.git
+.idea
+.DS_Store
+.dockerignore
+Dockerfile
