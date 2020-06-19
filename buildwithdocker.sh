@@ -11,6 +11,7 @@ docker create --name sdmonbuild ogi-it/sdmon
 
 # copy
 docker cp sdmonbuild:/usr/src/app/sdmon ./build/arm64
+base64 ./build/arm64/sdmon > ./build/arm64/sdmon.txt
 
 #cleanup
 docker container stop sdmonbuild
