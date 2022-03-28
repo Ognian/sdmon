@@ -55,7 +55,7 @@
 #define SD_GEN_CMD 56
 #define SD_BLOCK_SIZE 512
 
-int CMD56_data_in(int fd, int cmd56_arg, char *lba_block_data) {
+int CMD56_data_in(int fd, int cmd56_arg, unsigned char *lba_block_data) {
   int ret = 0;
   struct mmc_ioc_cmd idata;
 
