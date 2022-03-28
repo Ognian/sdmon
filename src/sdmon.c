@@ -135,7 +135,7 @@ int main(int argc, const char *argv[]) {
   int fd;
   const char *device;
   int cmd56_arg;
-  char data_in[SD_BLOCK_SIZE];
+  unsigned char data_in[SD_BLOCK_SIZE];
   int ret;
 
   int i=0;
