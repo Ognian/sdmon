@@ -1,4 +1,4 @@
-// (c) 2018 ogi-it, Ognian Tschakalov
+// (c) 2018-2022 ogi-it, Ognian Tschakalov
 
 //#include <ctype.h>
 //#include <dirent.h>
@@ -176,7 +176,7 @@ int main(int argc, const char *argv[]) {
     // exit(1);
   }
 
-  // do querry smart data
+  // do query smart data
   cmd56_arg = 0x00000021;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   if (ret) {
@@ -184,7 +184,7 @@ int main(int argc, const char *argv[]) {
     exit(1);
   }
 
-  // unfortunatly this is not json but good for debugging
+  // unfortunately this is not json but good for debugging
   //  printf("\"rawData\":\"");
   //  dump_data_block(data_in);
   //  printf("\",\n");
