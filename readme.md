@@ -8,8 +8,14 @@ Sdmon uses CMD56 of the SD card specification and currently does this for:
 The output is JSON so that it can be parsed easier in applications using sdmon.  
 
 ## Installation
-
-###Development Release
+### Released Version
+For available versions see [releases](./releases).
+Adjust the path to the desired version by replacing `v0.2.0` in the below example with the desired one.
+```
+curl -L https://github.com/Ognian/sdmon/releases/download/v0.2.0/sdmon-arm64.tar.gz | tar zxf - 
+```
+### Development Release
+The `latest` development [release](./releases) may be also available.
 ```
 curl -L https://github.com/Ognian/sdmon/releases/download/latest/sdmon-arm64.tar.gz | tar zxf - 
 ```
@@ -21,7 +27,7 @@ sudo ./sdmon /dev/mmcblk0
 ```
 
 ## Example Output
-
+This is the output when the card doesn't support health status:
 ```
 sudo ./sdmon /dev/mmcblk0
 {
@@ -37,4 +43,4 @@ sudo ./sdmon /dev/mmcblk0
 ```
 ```
 
-(c) 2018 - today, OGI-IT, Ognian Tschakalov and contributors released under GNU GPL v2
+(c) 2018 - today, OGI-IT, Ognian Tschakalov and contributors, released under GNU GPL v2
