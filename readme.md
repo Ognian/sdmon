@@ -4,6 +4,7 @@ This program reads out the health data of *some* industrial grade SD Cards. Unfo
 Sdmon uses CMD56 of the SD card specification and currently does this for:
 - Apacer Industrial SD Cards, and some others from branded distributors
 - SanDisk Industrial SD Cards (contributed by William Croft) - work in progress
+
 The output is JSON so that it can be parsed easier in applications using sdmon.  
 
 ## Installation
