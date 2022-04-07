@@ -9,13 +9,13 @@ The output is JSON so that it can be parsed easier in applications using sdmon.
 
 ## Installation
 ### Released Version
-For available versions see [releases](./releases).
+For available versions see [releases](../../releases).
 Adjust the path to the desired version by replacing `v0.2.0` in the below example with the desired one.
 ```
 curl -L https://github.com/Ognian/sdmon/releases/download/v0.2.0/sdmon-arm64.tar.gz | tar zxf - 
 ```
 ### Development Release
-The `latest` development [release](./releases) may be also available.
+The `latest` development [release](../../releases) may be also available.
 ```
 curl -L https://github.com/Ognian/sdmon/releases/download/latest/sdmon-arm64.tar.gz | tar zxf - 
 ```
@@ -35,7 +35,8 @@ sudo ./sdmon /dev/mmcblk0
 "date": "2022-04-07T16:18:24.000Z",
 "device":"/dev/mmcblk0",
 "idata.response[]":"0x900 0x00 0x00 0x00",
-"error":"2nd CMD56 CALL FAILED: Operation timed out"
+"error1":"1st CMD56 CALL FAILED: Operation timed out",
+"error2":"2nd CMD56 CALL FAILED: Operation timed out"
 }
 
 ```

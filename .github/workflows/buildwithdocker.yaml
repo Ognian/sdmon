@@ -12,7 +12,7 @@ jobs:
         with:
           fetch-depth: 0 # Number of commits to fetch. 0 indicates all history for all branches and tags. Default: 1
       - name: Set version string
-        run: export GIT_COMMIT=`git rev-parse --short HEAD` && export GIT_TAG=`git describe --abbrev=0 --dirty --tags` && export VERSION_STRING="$GIT_TAG ($GIT_COMMIT)" && echo "version_string=$VERSION_STRING" >> $GITHUB_ENV
+        run: export GIT_COMMIT=`git rev-parse --short HEAD` && export GIT_TAG=`git describe --abbrev=0 --dirty` && export VERSION_STRING="$GIT_TAG ($GIT_COMMIT)" && echo "version_string=$VERSION_STRING" >> $GITHUB_ENV
       - name: GITHUB_ENV
         run: cat $GITHUB_ENV
 
