@@ -171,7 +171,7 @@ int main(int argc, const char *argv[]) {
   cmd56_arg = 0x00000010; // all other are 0
   ret = CMD56_write(fd, cmd56_arg);
   if (ret) {
-    printf("\"error\":\"1st CMD56 CALL FAILED: %s\"\n", strerror(errno));
+    printf("\"error1\":\"1st CMD56 CALL FAILED: %s\"\n", strerror(errno));
     // printf("\"error\":\"1st CMD56 CALL FAILED: %s\"\n}\n", strerror(errno));
     // exit(1);
   }
@@ -180,7 +180,7 @@ int main(int argc, const char *argv[]) {
   cmd56_arg = 0x00000021;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   if (ret) {
-    printf("\"error\":\"2nd CMD56 CALL FAILED: %s\"\n}\n", strerror(errno));
+    printf("\"error2\":\"2nd CMD56 CALL FAILED: %s\"\n}\n", strerror(errno));
     exit(1);
   }
 

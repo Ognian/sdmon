@@ -1,8 +1,8 @@
 # (c)2018 ogi-it, Ognian Tschakalov
 
-VERSION = 0.01
+#VERSION = 0.01
 CC      = /usr/bin/gcc
-CFLAGS  = -Wall -g -D_REENTRANT -DVERSION=\"$(VERSION)\"
+CFLAGS  = -Wall -g -D_REENTRANT -DVERSION="\"$(VERSION_STRING)\"" -static
 LDFLAGS =
 
 OBJ = sdmon.o
