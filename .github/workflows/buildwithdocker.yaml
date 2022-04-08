@@ -11,9 +11,25 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Number of commits to fetch. 0 indicates all history for all branches and tags. Default: 1
+      # - run: git version
+      # - run: git show-ref --tags -d --abbrev=7
+      # the release action ("marvinpinto/action-automatic-releases@latest") uses the 'latest' lightweight tag releases work in github
+      # 'latest' is actually set by using automatic_release_tag:
+      # by using something fixed like 'latest' there is only one release that has this tag
+      # keep in mind that the tag 'latest' is only on github, since nobody fetches it back...
+      # since we have the hash, we can try to guess the version used
+      # looks like released versions are correct
+      # 'git describe --abbrev=0 --dirty' doesn't work BUT git describe does ????
+      # therefore we use 'export GIT_TAG=${GIT_TAG_LONG::-9}' instead of the above correct one ...
+      - run: git describe
       - name: Set version string
-        run: export GIT_COMMIT=`git rev-parse --short HEAD` && export GIT_TAG=`git describe --abbrev=0 --dirty` && export VERSION_STRING="$GIT_TAG ($GIT_COMMIT)" && echo "version_string=$VERSION_STRING" >> $GITHUB_ENV
-      - name: GITHUB_ENV
+        run: |
+          export GIT_COMMIT=`git rev-parse --short HEAD`
+          export GIT_TAG_LONG=`git describe`
+          export GIT_TAG=${GIT_TAG_LONG::-9}
+          export VERSION_STRING="$GIT_TAG ($GIT_COMMIT)"
+          echo "version_string=$VERSION_STRING" >> $GITHUB_ENV
+      - name: Verify GITHUB_ENV for version_string
         run: cat $GITHUB_ENV
 
       - name: Set up QEMU
@@ -25,17 +41,14 @@ jobs:
           install: true # use buildx as default build
       - name: Create build dir
         run: mkdir -p build
-      #      - name: Env
-      #        run: env
+      # - name: Env
+      #   run: env
       - name: Compile for linux/arm64
         # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
         run: docker build . --platform linux/arm64 --build-arg VERSION_STRING="${{env.version_string}}" -o type=local,dest=build/arm64 && cd build/arm64/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-arm64.tar.gz sdmon
 #      - name: Compile for linux/armv7
 #        # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
 #        run: docker build . --platform linux/arm64 --build-arg VERSION_STRING=${VERSION_STRING} -o type=local,dest=build/armv7 && cd build/armv7/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-armv7.tar.gz sdmon
-#      - name: Check result
-#        # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
-#        run: ls -ltrR dockerbuildoutput
       - name: Release if tagged
         if: ${{startsWith(github.ref, 'refs/tags/v')}} # tags start with v see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
         uses: "marvinpinto/action-automatic-releases@latest"

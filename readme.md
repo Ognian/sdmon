@@ -1,5 +1,7 @@
 # sdmon
 
+⚠️ I'm currently working on the CI process with github actions. Unfortunately this requires to push to the repo something wich is more or less "work in progress". Please give me some time (hours or some days) to finish and restore functionality. This message will be removed afterwards.
+
 This program reads out the health data of *some* industrial grade SD Cards. Unfortunately there is no standard way of doing this.
 Sdmon uses CMD56 of the SD card specification and currently does this for:
 - Apacer Industrial SD Cards, and some others from branded distributors
