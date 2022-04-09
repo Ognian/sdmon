@@ -4,7 +4,7 @@ on:
   push:
 
 jobs:
-  buildx:
+  build-and-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,16 +22,29 @@ jobs:
       # 'git describe --abbrev=0 --dirty' doesn't work BUT git describe does ????
       # therefore we use 'export GIT_TAG=${GIT_TAG_LONG::-9}' instead of the above correct one ...
       - run: git describe
-      - name: Set version string
+      - name: Set version string if prerelease
+        if: ${{startsWith(github.ref, 'refs/heads/master')}} # branch master and ignore any tag see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
         run: |
           export GIT_COMMIT=`git rev-parse --short HEAD`
           export GIT_TAG_LONG=`git describe`
           export GIT_TAG=${GIT_TAG_LONG::-9}
           export VERSION_STRING="$GIT_TAG ($GIT_COMMIT)"
           echo "version_string=$VERSION_STRING" >> $GITHUB_ENV
+      # the problem with getting the tagged version the same way like above is that at this point in time the tag is ONLY a lightweight one,
+      # so we have to take the tag from the context and not via 'git describe' (where we would get the previous one...)
+      - name: Set version string if tagged
+        if: ${{startsWith(github.ref, 'refs/tags/v')}} # tags start with v see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+        run: |
+          export GIT_COMMIT=`git rev-parse --short HEAD`
+          export GIT_TAG=${{github.ref_name}}
+          export VERSION_STRING="$GIT_TAG ($GIT_COMMIT)"
+          echo "version_string=$VERSION_STRING" >> $GITHUB_ENV
       - name: Verify GITHUB_ENV for version_string
         run: cat $GITHUB_ENV
 
+      # **********
+      # ***** start CI *****
+      # **********
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -49,8 +62,12 @@ jobs:
 #      - name: Compile for linux/armv7
 #        # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
 #        run: docker build . --platform linux/arm64 --build-arg VERSION_STRING=${VERSION_STRING} -o type=local,dest=build/armv7 && cd build/armv7/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-armv7.tar.gz sdmon
+      # **********
+      # ***** end of CI *****
+      # **********
+
       - name: Release if tagged
-        if: ${{startsWith(github.ref, 'refs/tags/v')}} # tags start with v see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+        if: ${{startsWith(github.ref, 'refs/tags/v')}}
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
@@ -60,7 +77,7 @@ jobs:
 #            build/sdmon-armv7.tar.gz
         id: "automatic_releases_tagged"
       - name: Release if prerelease
-        if: ${{startsWith(github.ref, 'refs/heads/master')}} # branch master and ignore any tag see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+        if: ${{startsWith(github.ref, 'refs/heads/master')}}
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
