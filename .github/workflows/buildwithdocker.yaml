@@ -12,7 +12,7 @@ jobs:
         with:
           fetch-depth: 0 # Number of commits to fetch. 0 indicates all history for all branches and tags. Default: 1
       # - run: git version
-      # - run: git show-ref --tags -d --abbrev=7
+      - run: git show-ref --tags -d --abbrev=7
       # the release action ("marvinpinto/action-automatic-releases@latest") uses the 'latest' lightweight tag releases work in github
       # 'latest' is actually set by using automatic_release_tag:
       # by using something fixed like 'latest' there is only one release that has this tag
