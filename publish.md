@@ -23,6 +23,10 @@ e37c12e refs/tags/v1.0.9^{}
     - or equivalent via GUI (whatever this way do...)
     
 - Or even better we use versiontag (modified!) from https://github.com/franiglesias/versiontag
+    - `./versiontag current` -> show current version
+    -  `./versiontag patch` -> patch
+    -  `./versiontag minor` -> minor
+    -  `./versiontag major` -> major
     
 
 - On the github action runner `github describe` works, but the `-dirty` flag doesn't. The `--abbrev=0` flag doesn't work either.
