@@ -228,7 +228,9 @@ if [[ false == "$force" &&  "no" == $(confirm "Do you agree?") ]]; then
 fi
 
 if [[ -z $msg ]]; then
-    execute git tag "v$major.$minor.$patch"
+    # execute git tag "v$major.$minor.$patch"
+    # ogi: changed to suite my needs: ALWAYS make an annotated tag!!
+    execute git tag -a "v$major.$minor.$patch" -m "releasing v$major.$minor.$patch"
 else
     printf 'Message         : %s\n\n' "$msg"
     execute git tag -a "v$major.$minor.$patch" -m "$msg ($action version)"

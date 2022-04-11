@@ -22,12 +22,12 @@ e37c12e refs/tags/v1.0.9^{}
     - lightweight tags only ??`git push --tags`
     - or equivalent via GUI (whatever this way do...)
     
-- Or even better we use versiontag (modified!) from https://github.com/franiglesias/versiontag
-    - `./versiontag current` -> show current version
-    -  `./versiontag patch` -> patch
-    -  `./versiontag minor` -> minor
-    -  `./versiontag major` -> major
+- Or even better we use versiontag (modified! to versiontag.sh) from https://github.com/franiglesias/versiontag
+    - `./versiontag.sh current` -> show current version
+    -  `./versiontag.sh patch` -> patch
+    -  `./versiontag.sh minor` -> minor
+    -  `./versiontag.sh major` -> major
     
-- TODO better sh script check if everything is commited before doing patch, minor, major
+- created publish.sh script to check if everything is committed before doing versioning and build
 
 - On the github action runner `github describe` works, but the `-dirty` flag doesn't. The `--abbrev=0` flag doesn't work either.

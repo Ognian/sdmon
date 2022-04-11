@@ -58,10 +58,10 @@ jobs:
       #   run: env
       - name: Compile for linux/arm64
         # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
-        run: docker build . --platform linux/arm64 --build-arg VERSION_STRING="${{env.version_string}}" -o type=local,dest=build/arm64 && cd build/arm64/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-arm64.tar.gz sdmon
-#      - name: Compile for linux/armv7
-#        # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
-#        run: docker build . --platform linux/arm64 --build-arg VERSION_STRING=${VERSION_STRING} -o type=local,dest=build/armv7 && cd build/armv7/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-armv7.tar.gz sdmon
+        run: docker build . --platform linux/arm64 --build-arg VERSION_STRING="${{env.version_string}} arm64" -o type=local,dest=build/arm64 && cd build/arm64/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-arm64.tar.gz sdmon
+      - name: Compile for linux/armv7
+        # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
+        run: docker build . --platform linux/arm64 --build-arg VERSION_STRING="${{env.version_string}} armv7" -o type=local,dest=build/arm/v7 && cd build/armv7/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-armv7.tar.gz sdmon
       # **********
       # ***** end of CI *****
       # **********
@@ -74,7 +74,7 @@ jobs:
           prerelease: false
           files: |
             build/sdmon-arm64.tar.gz
-#            build/sdmon-armv7.tar.gz
+            build/sdmon-armv7.tar.gz
         id: "automatic_releases_tagged"
       - name: Release if prerelease
         if: ${{startsWith(github.ref, 'refs/heads/master')}}
@@ -86,5 +86,5 @@ jobs:
           title: "Development Build"
           files: |
             build/sdmon-arm64.tar.gz
-#            build/sdmon-armv7.tar.gz
+            build/sdmon-armv7.tar.gz
         id: "automatic_releases_not_tagged"
