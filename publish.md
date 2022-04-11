@@ -28,5 +28,6 @@ e37c12e refs/tags/v1.0.9^{}
     -  `./versiontag minor` -> minor
     -  `./versiontag major` -> major
     
+- TODO better sh script check if everything is commited before doing patch, minor, major
 
 - On the github action runner `github describe` works, but the `-dirty` flag doesn't. The `--abbrev=0` flag doesn't work either.
