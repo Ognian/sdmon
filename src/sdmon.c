@@ -192,11 +192,15 @@ int main(int argc, const char *argv[]) {
        this is possible, entry into a read only mode could occur upon the next write cycle.
      */
 
-       printf("\"manufactureYYMMDD\": \"%s\",\n", strncpy(tmpstr, (char *)&data_in[2], 6));
+       strncpy(tmpstr, (char *)&data_in[2], 6);
+       tmpstr[6] = 0;
+       printf("\"manufactureYYMMDD\": \"%s\",\n", tmpstr);
        printf("\"healthStatusPercentUsed\": %d,\n", data_in[8]);
        printf("\"featureRevision\": \"0x%x\",\n", data_in[11]);
        printf("\"generationIdentifier\": %d,\n", data_in[14]);
-       printf("\"productString\": \"%s\",\n", strncpy(tmpstr, (char *)&data_in[49], 28));
+       strncpy(tmpstr, (char *)&data_in[49], 32);
+       tmpstr[32] = 0;
+       printf("\"productString\": \"%s\",\n", tmpstr);
        close(fd);
        printf("\"success\":true\n}\n");
        exit(0);
