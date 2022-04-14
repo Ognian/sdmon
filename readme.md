@@ -2,10 +2,12 @@
 
 This program reads out the health data of *some* industrial grade SD Cards. Unfortunately there is no standard way of doing this.
 Sdmon uses CMD56 of the SD card specification and currently does this for:
-- Apacer Industrial SD Cards, and some others from branded distributors
-- SanDisk Industrial SD Cards (contributed by William Croft) - work in progress
+- [Apacer Industrial SD Cards](https://industrial.apacer.com/en-ww/SSD-Industrial-Card/microSD), and some others from branded distributors
+-  [SanDisk Industrial SD Cards](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/product/embedded-flash/product-brief/product-brief-western-digital-industrial-sd-microsd.pdf) (code contributed by William Croft)
 
-The output is JSON so that it can be parsed easier in applications using sdmon.  
+Although some of the above cards have been tested, there is no guarantee that a particular card of the above manufacturers will work. 
+
+The output of the program is JSON so that it can be parsed easier in applications using sdmon.  
 
 ## Installation
 ### Released Version
@@ -20,8 +22,9 @@ The `latest` development [release](../../releases) may be also available.
 curl -L https://github.com/Ognian/sdmon/releases/download/latest/sdmon-arm64.tar.gz | tar zxf - 
 ```
 ## Usage
+The executable is statically linked, therefor it should work without any dependencies.
 
-on a raspberry pi:
+On a raspberry pi:
 ```
 sudo ./sdmon /dev/mmcblk0
 ```
@@ -69,5 +72,22 @@ Apacer Industrial micro SD card (99.97% healthy):
 }
 
 ```
+Sandisk Industrial SD card (99% healthy)
+```
+sudo ./sdmon /dev/mmcblk0
+{
+"version": "v0.3.2-3 (a04b618) arm64",
+"date": "2022-04-14T08:27:15.000Z",
+"device":"/dev/mmcblk0",
+"signature":"0x44 0x53",
+"SanDisk":"true",
+"manufactureYYMMDD": "211122",
+"healthStatusPercentUsed": 1,
+"featureRevision": "0x1f",
+"generationIdentifier": 5,
+"productString": "SanDisk                         ",
+"success":true
+}
+```
 
-(c) 2018 - today, OGI-IT, Ognian Tschakalov and contributors, released under GNU GPL v2
+(c) 2018 - today, **OGI-IT**, Ognian Tschakalov and contributors, released under GNU GPL v2
