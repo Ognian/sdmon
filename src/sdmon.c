@@ -144,6 +144,8 @@ int main(int argc, const char *argv[]) {
   time_t t = time(NULL);
   struct tm tm = *localtime(&t);
 
+  char tmpstr[100];
+
   // json output
   printf("{\n");
   printf("\"version\": \"%s\",\n", VERSION);
@@ -166,6 +168,46 @@ int main(int argc, const char *argv[]) {
     printf("\"error\":\"device open failed\"\n}\n");
     exit(1);
   }
+
+  // first try if read wit arg 1 returns anything
+  cmd56_arg = 0x00000001;
+  ret = CMD56_data_in(fd, cmd56_arg, data_in);
+  // we assume success when the call was successful AND the signature is not 0xff 0xff
+  if (ret == 0 &&
+     !(
+     (data_in[0] == 0xff && data_in[1] == 0xff) ||
+     (data_in[0] == 0x00 && data_in[1] == 0x00)
+     )) {
+       printf("\"signature\":\"0x%x 0x%x\",\n",data_in[0],data_in[1]);
+       if (data_in[0] == 0x44 && data_in[1] == 0x53) {
+         printf("\"SanDisk\":\"true\",\n");
+       }
+
+     /*
+       Health Status is an estimated percent life used based on the amount of TBW the NAND
+       memory has experienced relative to the SD card device TBW ability. Values reported in
+       hexadecimal in 1% increments with 0x01 representing 0.0% to 0.99% used. A value of
+       0x64 indicates 99 to 99.99% of the ability have been used. The SD card storage device
+       may accommodate writes in excess of the 100% expected life limit. Note that although
+       this is possible, entry into a read only mode could occur upon the next write cycle.
+     */
+
+       printf("\"manufactureYYMMDD\": \"%s\",\n", strncpy(tmpstr, (char *)&data_in[2], 6));
+       printf("\"healthStatusPercentUsed\": %d,\n", data_in[8]);
+       printf("\"featureRevision\": \"0x%x\",\n", data_in[11]);
+       printf("\"generationIdentifier\": %d,\n", data_in[14]);
+       printf("\"productString\": \"%s\",\n", strncpy(tmpstr, (char *)&data_in[49], 28));
+       close(fd);
+       printf("\"success\":true\n}\n");
+       exit(0);
+
+    }
+    if (ret == 0) {
+      printf("\"read_via_cmd56_arg_1\":\"read successful but signature 0x%x 0x%x\"\n",data_in[0],data_in[1]);
+    } else {
+      printf("\"read_via_cmd56_arg_1\":\"not implemented: %s\"\n",
+             strerror(errno));
+    }
 
   // prepare for health command
   cmd56_arg = 0x00000010; // all other are 0
