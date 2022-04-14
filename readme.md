@@ -40,7 +40,7 @@ sudo ./sdmon /dev/mmcblk0
 }
 
 ```
-Apacer Industrial micro SD card (97.56% healthy):
+Apacer Industrial micro SD card (99.97% healthy):
 ```
 {
 "version": "v0.3.2-dirty (262e866)",
