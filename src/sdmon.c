@@ -207,9 +207,9 @@ int main(int argc, const char *argv[]) {
 
     }
     if (ret == 0) {
-      printf("\"read_via_cmd56_arg_1\":\"read successful but signature 0x%x 0x%x\"\n",data_in[0],data_in[1]);
+      printf("\"read_via_cmd56_arg_1\":\"read successful but signature 0x%x 0x%x\",\n",data_in[0],data_in[1]);
     } else {
-      printf("\"read_via_cmd56_arg_1\":\"not implemented: %s\"\n",
+      printf("\"read_via_cmd56_arg_1\":\"not implemented: %s\",\n",
              strerror(errno));
     }
 
@@ -217,7 +217,7 @@ int main(int argc, const char *argv[]) {
   cmd56_arg = 0x00000010; // all other are 0
   ret = CMD56_write(fd, cmd56_arg);
   if (ret) {
-    printf("\"error1\":\"1st CMD56 CALL FAILED: %s\"\n", strerror(errno));
+    printf("\"error1\":\"1st CMD56 CALL FAILED: %s\",\n", strerror(errno));
     // printf("\"error\":\"1st CMD56 CALL FAILED: %s\"\n}\n", strerror(errno));
     // exit(1);
   }
