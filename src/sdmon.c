@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 // this include defines MMC_BLOCK_MAJOR the magic number for the calculation of
 // MMC_IOC_CMD
@@ -53,6 +54,8 @@
 // CMD56 implementation
 #define SD_GEN_CMD 56
 #define SD_BLOCK_SIZE 512
+
+#define formatBool(b) ((b) ? "true" : "false")
 
 int CMD56_data_in(int fd, int cmd56_arg, unsigned char *lba_block_data) {
   int ret = 0;
@@ -144,6 +147,8 @@ int main(int argc, const char *argv[]) {
   struct tm tm = *localtime(&t);
 
   char tmpstr[100];
+  bool addTime = false;
+  const char *option;
 
   // json output
   printf("{\n");
@@ -155,12 +160,23 @@ int main(int argc, const char *argv[]) {
   // "MMC_IOC_CMD": "c048b300", => 0xc048b300
   // printf("\"MMC_IOC_CMD\": \"%lx\",\n", MMC_IOC_CMD);
 
-  if (argc != 2) {
-    printf("\"usage\":\"wrong argument count\"\n}\n");
+  if (argc < 2 || argc > 3) {
+    printf("\"usage\":\"wrong argument count, sdmon <device> [-a]\"\n}\n");
     exit(1);
   }
   device = argv[1];
   printf("\"device\":\"%s\",\n", device);
+
+  if (argc > 2) {
+    option = argv[2];
+    if (strcmp(option, "-a") == 0) {
+      addTime = true;
+    } else {
+      printf("\"usage\":\"wrong option, sdmon <device> [-a]\"\n}\n");
+      exit(1);
+    }
+  }
+  printf("\"addTime\": \"%s\",\n", formatBool(addTime));
 
   fd = open(device, O_RDWR);
   if (fd < 0) {
@@ -213,6 +229,10 @@ int main(int argc, const char *argv[]) {
     printf("\"error1\":\"1st CMD56 CALL FAILED: %s\",\n", strerror(errno));
     // printf("\"error\":\"1st CMD56 CALL FAILED: %s\"\n}\n", strerror(errno));
     // exit(1);
+  }
+
+  if (addTime) {
+    usleep(1000000);
   }
 
   // do query smart data
