@@ -3,7 +3,8 @@
 This program reads out the health data of *some* industrial grade SD Cards. Unfortunately there is no standard way of doing this.
 Sdmon uses CMD56 of the SD card specification and currently does this for:
 - [Apacer Industrial SD Cards](https://industrial.apacer.com/en-ww/SSD-Industrial-Card/microSD), and some others from branded distributors
--  [SanDisk Industrial SD Cards](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/product/embedded-flash/product-brief/product-brief-western-digital-industrial-sd-microsd.pdf) (code contributed by William Croft)
+- [Kingston Industrial SD Cards](https://www.kingston.com/en/memory-cards/industrial-grade-microsd-uhs-i-u3) (SDCIT/32GB and the SDCIT2/32GB where reported to work with the -a option, see Issue #6)
+- [SanDisk Industrial SD Cards](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/product/embedded-flash/product-brief/product-brief-western-digital-industrial-sd-microsd.pdf) (code contributed by William Croft)
 
 Although some of the above cards have been tested, there is no guarantee that a particular card of the above manufacturers will work. 
 
@@ -27,6 +28,12 @@ The executable is statically linked, therefor it should work without any depende
 On a raspberry pi:
 ```
 sudo ./sdmon /dev/mmcblk0
+```
+
+The -a option was introduced to allow extra time between the 2 CMD56 commands (1 second).
+Try first without it and if not successful try using the -a option like:
+```
+sudo ./sdmon /dev/mmcblk0 -a
 ```
 
 ## Example Output
