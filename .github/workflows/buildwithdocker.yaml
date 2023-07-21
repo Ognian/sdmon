@@ -62,6 +62,9 @@ jobs:
       - name: Compile for linux/armv7
         # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
         run: docker build . --platform linux/arm/v7 --build-arg VERSION_STRING="${{env.version_string}} armv7" -o type=local,dest=build/armv7 && cd build/armv7/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-armv7.tar.gz sdmon
+      - name: Compile for linux/armv6
+        # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
+        run: docker build . --platform linux/arm/v6 --build-arg VERSION_STRING="${{env.version_string}} armv6" -o type=local,dest=build/armv6 && cd build/armv6/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-armv6.tar.gz sdmon
       # **********
       # ***** end of CI *****
       # **********
@@ -75,6 +78,7 @@ jobs:
           files: |
             build/sdmon-arm64.tar.gz
             build/sdmon-armv7.tar.gz
+            build/sdmon-armv6.tar.gz
         id: "automatic_releases_tagged"
       - name: Release if prerelease
         if: ${{startsWith(github.ref, 'refs/heads/master')}}
@@ -87,4 +91,5 @@ jobs:
           files: |
             build/sdmon-arm64.tar.gz
             build/sdmon-armv7.tar.gz
+            build/sdmon-armv6.tar.gz
         id: "automatic_releases_not_tagged"
