@@ -23,7 +23,7 @@ The `latest` development [release](../../releases) may be also available.
 curl -L https://github.com/Ognian/sdmon/releases/download/latest/sdmon-arm64.tar.gz | tar zxf - 
 ```
 ## Usage
-The executable is statically linked, therefor it should work without any dependencies.
+The executable is statically linked, therefore it should work without any dependencies.
 
 On a raspberry pi:
 ```
