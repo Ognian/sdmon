@@ -133,6 +133,16 @@ void dump_data_block(char *lba_block_data) {
   return;
 }
 
+int nword_to_int(unsigned char *data, int offset, int size) {
+  if (size == 4) {
+    return ((data[offset+3] << 24) | (data[offset+2] << 16) | (data[offset+1] << 8) | data[offset]);
+  } else if (size == 8) {
+    return (((long long)data[offset+3] << 56) | ((long long)data[offset+3] << 48) | ((long long)data[offset+3] << 40) | ((long long)data[offset+3] << 32) | ((long long)data[offset+3] << 24) | ((long long)data[offset+2] << 16) | ((long long)data[offset+1] << 8) | (long long)data[offset]);
+  } else {
+    return -1;
+  }
+}
+
 int main(int argc, const char *argv[]) {
   int fd;
   const char *device;
@@ -190,8 +200,25 @@ int main(int argc, const char *argv[]) {
   // we assume success when the call was successful AND the signature is not 0xff 0xff
   if (ret == 0 && !((data_in[0] == 0xff && data_in[1] == 0xff) || (data_in[0] == 0x00 && data_in[1] == 0x00))) {
     printf("\"signature\":\"0x%x 0x%x\",\n", data_in[0], data_in[1]);
-    if (data_in[0] == 0x44 && data_in[1] == 0x53) {
-      printf("\"SanDisk\":\"true\",\n");
+
+    if (data_in[0] == 0x70 && data_in[1] == 0x58) {
+      printf("\"Longsys\":\"true\",\n");
+      printf("\"SMARTVersions\": %d,\n", nword_to_int(data_in, 4, 4));
+      printf("\"sizeOfDevSMART\": %d,\n", nword_to_int(data_in, 12, 4));
+      printf("\"originalBadBlock\": %d,\n", nword_to_int(data_in, 16, 4));
+      printf("\"increaseBadBlock\": %d,\n", nword_to_int(data_in, 20, 4));
+      printf("\"writeAllSectNum\": %d Sector(512Byte),\n", nword_to_int(data_in, 24, 8));
+      printf("\"replaceBlockLeft\": %d,\n", nword_to_int(data_in, 32, 4));
+      printf("\"degreOfWear\": %.02f Cycle,\n", (float)nword_to_int(data_in, 36, 4)/1000);
+      printf("\"sectorTotal\": %d,\n", nword_to_int(data_in, 40, 4));
+      printf("\"remainLifeTime\": %d%%,\n", nword_to_int(data_in, 44, 4));
+      printf("\"remainWrGBNum\": %.02fTB,\n", (float)nword_to_int(data_in, 48, 4)/1024);
+      printf("\"lifeTimeTotal\": %.02f Cycle,\n", (float)nword_to_int(data_in, 52, 4));
+      printf("\"phyWrGBNum\": %.02fTB,\n", (float)nword_to_int(data_in, 56, 4)/1024);
+      
+      close(fd);
+      printf("\"success\":true\n}\n");
+      exit(0);
     }
 
     /*
@@ -202,19 +229,22 @@ int main(int argc, const char *argv[]) {
       may accommodate writes in excess of the 100% expected life limit. Note that although
       this is possible, entry into a read only mode could occur upon the next write cycle.
     */
-
-    strncpy(tmpstr, (char *)&data_in[2], 6);
-    tmpstr[6] = 0;
-    printf("\"manufactureYYMMDD\": \"%s\",\n", tmpstr);
-    printf("\"healthStatusPercentUsed\": %d,\n", data_in[8]);
-    printf("\"featureRevision\": \"0x%x\",\n", data_in[11]);
-    printf("\"generationIdentifier\": %d,\n", data_in[14]);
-    strncpy(tmpstr, (char *)&data_in[49], 32);
-    tmpstr[32] = 0;
-    printf("\"productString\": \"%s\",\n", tmpstr);
-    close(fd);
-    printf("\"success\":true\n}\n");
-    exit(0);
+    if (data_in[0] == 0x44 && data_in[1] == 0x53) {
+      printf("\"SanDisk\":\"true\",\n");
+      strncpy(tmpstr, (char *)&data_in[2], 6);
+      tmpstr[6] = 0;
+      printf("\"manufactureYYMMDD\": \"%s\",\n", tmpstr);
+      printf("\"healthStatusPercentUsed\": %d,\n", data_in[8]);
+      printf("\"featureRevision\": \"0x%x\",\n", data_in[11]);
+      printf("\"generationIdentifier\": %d,\n", data_in[14]);
+      strncpy(tmpstr, (char *)&data_in[49], 32);
+      tmpstr[32] = 0;
+      printf("\"productString\": \"%s\",\n", tmpstr);
+      close(fd);
+      printf("\"success\":true\n}\n");
+      exit(0);
+    }
+    
   }
   if (ret == 0) {
     printf("\"read_via_cmd56_arg_1\":\"read successful but signature 0x%x 0x%x\",\n", data_in[0], data_in[1]);
