@@ -194,7 +194,7 @@ int main(int argc, const char *argv[]) {
     exit(1);
   }
 
-  // first try if read wit arg 1 returns anything
+  // first try if read with arg 1 returns anything
   cmd56_arg = 0x00000001;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
@@ -221,29 +221,31 @@ int main(int argc, const char *argv[]) {
       exit(0);
     }
 
-    /*
-      Health Status is an estimated percent life used based on the amount of TBW the NAND
-      memory has experienced relative to the SD card device TBW ability. Values reported in
-      hexadecimal in 1% increments with 0x01 representing 0.0% to 0.99% used. A value of
-      0x64 indicates 99 to 99.99% of the ability have been used. The SD card storage device
-      may accommodate writes in excess of the 100% expected life limit. Note that although
-      this is possible, entry into a read only mode could occur upon the next write cycle.
-    */
     if (data_in[0] == 0x44 && data_in[1] == 0x53) {
       printf("\"SanDisk\":\"true\",\n");
-      strncpy(tmpstr, (char *)&data_in[2], 6);
-      tmpstr[6] = 0;
-      printf("\"manufactureYYMMDD\": \"%s\",\n", tmpstr);
-      printf("\"healthStatusPercentUsed\": %d,\n", data_in[8]);
-      printf("\"featureRevision\": \"0x%x\",\n", data_in[11]);
-      printf("\"generationIdentifier\": %d,\n", data_in[14]);
-      strncpy(tmpstr, (char *)&data_in[49], 32);
-      tmpstr[32] = 0;
-      printf("\"productString\": \"%s\",\n", tmpstr);
-      close(fd);
-      printf("\"success\":true\n}\n");
-      exit(0);
     }
+
+    /*
+          Health Status is an estimated percent life used based on the amount of TBW the NAND
+          memory has experienced relative to the SD card device TBW ability. Values reported in
+          hexadecimal in 1% increments with 0x01 representing 0.0% to 0.99% used. A value of
+          0x64 indicates 99 to 99.99% of the ability have been used. The SD card storage device
+          may accommodate writes in excess of the 100% expected life limit. Note that although
+          this is possible, entry into a read only mode could occur upon the next write cycle.
+    */
+
+    strncpy(tmpstr, (char *)&data_in[2], 6);
+    tmpstr[6] = 0;
+    printf("\"manufactureYYMMDD\": \"%s\",\n", tmpstr);
+    printf("\"healthStatusPercentUsed\": %d,\n", data_in[8]);
+    printf("\"featureRevision\": \"0x%x\",\n", data_in[11]);
+    printf("\"generationIdentifier\": %d,\n", data_in[14]);
+    strncpy(tmpstr, (char *)&data_in[49], 32);
+    tmpstr[32] = 0;
+    printf("\"productString\": \"%s\",\n", tmpstr);
+    close(fd);
+    printf("\"success\":true\n}\n");
+    exit(0);
     
   }
   if (ret == 0) {
