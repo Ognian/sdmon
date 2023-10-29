@@ -17,7 +17,7 @@ e37c12e refs/tags/v1.0.9^{}
 ```
 
 - Tags are local, they must be pushed to remote too
-    - push all tags `it push --follow-tags`
+    - push all tags `git push --follow-tags`
     - push a single one `git push origin v0.2.3`
     - lightweight tags only ??`git push --tags`
     - or equivalent via GUI (whatever this way do...)
