@@ -133,6 +133,10 @@ void dump_data_block(char *lba_block_data) {
   return;
 }
 
+int bytes_to_int(unsigned char byte1, unsigned char byte2, unsigned char byte3, unsigned char byte4) {
+  return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
+}
+
 int nword_to_int(unsigned char *data, int offset, int size) {
   if (size == 4) {
     return ((data[offset+3] << 24) | (data[offset+2] << 16) | (data[offset+1] << 8) | data[offset]);
@@ -221,7 +225,7 @@ int main(int argc, const char *argv[]) {
       exit(0);
     }
 
-    if (data_in[0] == 0x44 && data_in[1] == 0x53) {
+    if (data_in[0] == 0x44 && (data_in[1] == 0x53 || data_in[1] == 0x57)) {
       printf("\"SanDisk\":\"true\",\n");
     }
 
@@ -243,6 +247,7 @@ int main(int argc, const char *argv[]) {
     strncpy(tmpstr, (char *)&data_in[49], 32);
     tmpstr[32] = 0;
     printf("\"productString\": \"%s\",\n", tmpstr);
+    printf("\"powerOnTimes\": %d,\n", bytes_to_int(0, data_in[24], data_in[25], data_in[26]));
     close(fd);
     printf("\"success\":true\n}\n");
     exit(0);
