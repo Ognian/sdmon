@@ -1,11 +1,12 @@
 // (c) 2018-2022 ogi-it, Ognian Tschakalov
 
-//#include <ctype.h>
-//#include <dirent.h>
+// #include <ctype.h>
+// #include <dirent.h>
 #include <fcntl.h>
-//#include <libgen.h>
-//#include <limits.h>
+// #include <libgen.h>
+// #include <limits.h>
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +14,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <stdbool.h>
 
 // this include defines MMC_BLOCK_MAJOR the magic number for the calculation of
 // MMC_IOC_CMD
@@ -133,15 +133,14 @@ void dump_data_block(char *lba_block_data) {
   return;
 }
 
-int bytes_to_int(unsigned char byte1, unsigned char byte2, unsigned char byte3, unsigned char byte4) {
-  return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
-}
+int bytes_to_int(unsigned char byte1, unsigned char byte2, unsigned char byte3, unsigned char byte4) { return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4; }
 
 int nword_to_int(unsigned char *data, int offset, int size) {
   if (size == 4) {
-    return ((data[offset+3] << 24) | (data[offset+2] << 16) | (data[offset+1] << 8) | data[offset]);
+    return ((data[offset + 3] << 24) | (data[offset + 2] << 16) | (data[offset + 1] << 8) | data[offset]);
   } else if (size == 8) {
-    return (((long long)data[offset+3] << 56) | ((long long)data[offset+3] << 48) | ((long long)data[offset+3] << 40) | ((long long)data[offset+3] << 32) | ((long long)data[offset+3] << 24) | ((long long)data[offset+2] << 16) | ((long long)data[offset+1] << 8) | (long long)data[offset]);
+    return (((long long)data[offset + 3] << 56) | ((long long)data[offset + 3] << 48) | ((long long)data[offset + 3] << 40) | ((long long)data[offset + 3] << 32) |
+            ((long long)data[offset + 3] << 24) | ((long long)data[offset + 2] << 16) | ((long long)data[offset + 1] << 8) | (long long)data[offset]);
   } else {
     return -1;
   }
@@ -213,13 +212,13 @@ int main(int argc, const char *argv[]) {
       printf("\"increaseBadBlock\": %d,\n", nword_to_int(data_in, 20, 4));
       printf("\"writeAllSectNum\": %d Sector(512Byte),\n", nword_to_int(data_in, 24, 8));
       printf("\"replaceBlockLeft\": %d,\n", nword_to_int(data_in, 32, 4));
-      printf("\"degreOfWear\": %.02f Cycle,\n", (float)nword_to_int(data_in, 36, 4)/1000);
+      printf("\"degreOfWear\": %.02f Cycle,\n", (float)nword_to_int(data_in, 36, 4) / 1000);
       printf("\"sectorTotal\": %d,\n", nword_to_int(data_in, 40, 4));
       printf("\"remainLifeTime\": %d%%,\n", nword_to_int(data_in, 44, 4));
-      printf("\"remainWrGBNum\": %.02fTB,\n", (float)nword_to_int(data_in, 48, 4)/1024);
+      printf("\"remainWrGBNum\": %.02fTB,\n", (float)nword_to_int(data_in, 48, 4) / 1024);
       printf("\"lifeTimeTotal\": %.02f Cycle,\n", (float)nword_to_int(data_in, 52, 4));
-      printf("\"phyWrGBNum\": %.02fTB,\n", (float)nword_to_int(data_in, 56, 4)/1024);
-      
+      printf("\"phyWrGBNum\": %.02fTB,\n", (float)nword_to_int(data_in, 56, 4) / 1024);
+
       close(fd);
       printf("\"success\":true\n}\n");
       exit(0);
@@ -251,12 +250,28 @@ int main(int argc, const char *argv[]) {
     close(fd);
     printf("\"success\":true\n}\n");
     exit(0);
-    
   }
   if (ret == 0) {
     printf("\"read_via_cmd56_arg_1\":\"read successful but signature 0x%x 0x%x\",\n", data_in[0], data_in[1]);
   } else {
     printf("\"read_via_cmd56_arg_1\":\"not implemented: %s\",\n", strerror(errno));
+  }
+
+  // try micron argument
+  cmd56_arg = 0x110005fb;
+  ret = CMD56_data_in(fd, cmd56_arg, data_in);
+  // we assume success when the call was successful AND the signature is not 0xff 0xff
+  if (ret == 0 && !((data_in[0] == 0xff && data_in[1] == 0xff) || (data_in[0] == 0x00 && data_in[1] == 0x00))) {
+    printf("" signature ":" 0x % x 0x % x ",\n", data_in[0], data_in[1]);
+    if (data_in[0] == 0x4d && data_in[1] == 0x45) {
+      printf("\"Micron\":\"true\",\n");
+      printf("\"Percentange step utilization\": %d,\n", (int)(data_in[7]));
+      printf("\"TLC area utilization\": %d,\n", (int)(data_in[8]));
+      printf("\"SLC area utilization\": %d,\n", (int)(data_in[9]));
+      close(fd);
+      printf("\"success\":true\n}\n");
+      exit(0);
+    }
   }
 
   // prepare for health command
