@@ -46,10 +46,10 @@ jobs:
       # ***** start CI *****
       # **********
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
         with:
           install: true # use buildx as default build
       - name: Create build dir
@@ -71,7 +71,7 @@ jobs:
 
       - name: Release if tagged
         if: ${{startsWith(github.ref, 'refs/tags/v')}}
-        uses: "marvinpinto/action-automatic-releases@latest"
+        uses: "softprops/action-gh-release@v1"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
@@ -82,7 +82,7 @@ jobs:
         id: "automatic_releases_tagged"
       - name: Release if prerelease
         if: ${{startsWith(github.ref, 'refs/heads/master')}}
-        uses: "marvinpinto/action-automatic-releases@latest"
+        uses: "softprops/action-gh-release@v1"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
