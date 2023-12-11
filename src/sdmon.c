@@ -251,12 +251,7 @@ int main(int argc, const char *argv[]) {
     printf("\"success\":true\n}\n");
     exit(0);
   }
-  if (ret == 0) {
-    printf("\"read_via_cmd56_arg_1\":\"read successful but signature 0x%x 0x%x\",\n", data_in[0], data_in[1]);
-  } else {
-    printf("\"read_via_cmd56_arg_1\":\"not implemented: %s\",\n", strerror(errno));
-  }
-
+  
   // try micron argument
   cmd56_arg = 0x110005fb;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
@@ -272,6 +267,12 @@ int main(int argc, const char *argv[]) {
       printf("\"success\":true\n}\n");
       exit(0);
     }
+  }
+
+  if (ret == 0) {
+    printf("\"read_via_cmd56_arg_1\":\"read successful but signature 0x%x 0x%x\",\n", data_in[0], data_in[1]);
+  } else {
+    printf("\"read_via_cmd56_arg_1\":\"not implemented: %s\",\n", strerror(errno));
   }
 
   // prepare for health command
