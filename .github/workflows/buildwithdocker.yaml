@@ -90,7 +90,7 @@ jobs:
         if: ${{startsWith(github.ref, 'refs/heads/master')}}
         uses: "softprops/action-gh-release@v1"
         with:
-          #tag_name: "latest"
+          tag_name: "latest"
           prerelease: true
           generate_release_notes: true
           name: "Development Build"
