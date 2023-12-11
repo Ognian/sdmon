@@ -69,12 +69,6 @@ jobs:
       # ***** end of CI *****
       # **********
 
-      - name: Generate changelog with git-cliff
-        uses: tj-actions/git-cliff@v1
-        with:
-          args: --latest --strip all
-          output: "CHANGELOG.md"
-
       - name: Release if tagged
         if: ${{startsWith(github.ref, 'refs/tags/v')}}
         uses: "softprops/action-gh-release@v1"
