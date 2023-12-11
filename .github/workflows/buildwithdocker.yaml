@@ -1,4 +1,8 @@
 name: buildwithdocker-on-push
+# !!!! IMPORTANT
+# for this to function properly there should be NO latest tag on any commit
+# delete latest on remote: git push origin :latest
+# delete locally: git tag --delete latest
 
 on:
   push:
@@ -84,7 +88,7 @@ jobs:
         if: ${{startsWith(github.ref, 'refs/heads/master')}}
         uses: "softprops/action-gh-release@v1"
         with:
-          tag_name: "latest"
+          tag_name: "latest" # we are tagging the github repo (origin)
           prerelease: true
           generate_release_notes: true
           name: "Development Build"
