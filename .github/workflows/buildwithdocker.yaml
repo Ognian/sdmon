@@ -81,7 +81,6 @@ jobs:
         with:
           prerelease: false
           generate_release_notes: true
-          body_path: "CHANGELOG.md"
           files: |
             build/sdmon-arm64.tar.gz
             build/sdmon-armv7.tar.gz
@@ -94,7 +93,6 @@ jobs:
           tag_name: "latest"
           prerelease: true
           generate_release_notes: true
-          body_path: "CHANGELOG.md"
           name: "Development Build"
           files: |
             build/sdmon-arm64.tar.gz
