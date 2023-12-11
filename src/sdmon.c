@@ -257,7 +257,7 @@ int main(int argc, const char *argv[]) {
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
   if (ret == 0 && !((data_in[0] == 0xff && data_in[1] == 0xff) || (data_in[0] == 0x00 && data_in[1] == 0x00))) {
-    printf("\" signature \":\" 0x % x 0x % x\",\n", data_in[0], data_in[1]);
+    printf("\" signature \":\"0x%x 0x%x\",\n", data_in[0], data_in[1]);
     if (data_in[0] == 0x4d && data_in[1] == 0x45) {
       printf("\"Micron\":\"true\",\n");
       printf("\"Percentange step utilization\": %d,\n", (int)(data_in[7]));
