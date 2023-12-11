@@ -75,10 +75,10 @@ jobs:
 
       - name: Release if tagged
         if: ${{startsWith(github.ref, 'refs/tags/v')}}
-        uses: "softprops/action-gh-release@v1"
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
-          generate_release_notes: true
           files: |
             build/sdmon-arm64.tar.gz
             build/sdmon-armv7.tar.gz
@@ -86,12 +86,14 @@ jobs:
         id: "automatic_releases_tagged"
       - name: Release if prerelease
         if: ${{startsWith(github.ref, 'refs/heads/master')}}
-        uses: "ncipollo/release-action@v1"
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
-          allowUpdates: true
-          tag: "latest" # we are tagging the github repo (origin)
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
           prerelease: true
-          generateReleaseNotes: true
-          name: "Development Build"
-          artifacts: "build/sdmon-arm64.tar.gz,build/sdmon-armv7.tar.gz,build/sdmon-armv6.tar.gz"
+          title: "Development Build"
+          files: |
+            build/sdmon-arm64.tar.gz
+            build/sdmon-armv7.tar.gz
+            build/sdmon-armv6.tar.gz
         id: "automatic_releases_not_tagged"
