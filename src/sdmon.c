@@ -287,7 +287,7 @@ int main(int argc, const char *argv[]) {
       printf("\"System area max cycle cnt\": [\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\"],\n", data_in[68], data_in[69], data_in[70], data_in[71]);
       printf("\"System area total cycle cnt\": [\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\"],\n", data_in[72], data_in[73], data_in[74], data_in[75]);
       printf("\"System area average cycle cnt\": [\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\"],\n", data_in[76], data_in[77], data_in[78], data_in[79]);
-      printf("\"Remaining Lifetime Percent\": %d%,\n", (int)(data_in[80]));
+      printf("\"Remaining Lifetime Percent\": %d %,\n", (int)(data_in[80]));
       switch (data_in[86]) {
       case 0x00:
         printf("\"Speed mode\": Default speed\n");
