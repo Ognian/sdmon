@@ -307,7 +307,7 @@ int main(int argc, const char *argv[]) {
 	printf("\"Maximum erase cnt\": %d,\n", (long)((data_in[39]<< 24) + (data_in[38]<< 16) + (data_in[37]<< 8) + data_in[36]));
 	printf("\"Average erase cnt\": %d,\n", (long)((data_in[47] << 24) + (data_in[46] << 16) + (data_in[45] << 8) + data_in[44]));
    
-	printf("\"Remaining card life\": %d%,\n", (int)(data_in[70]));
+	printf("\"Remaining card life\": %d%%,\n", (int)(data_in[70]));
 	printf("\"Total write CRC cnt\": %d,\n", bytes_to_int(data_in[72], data_in[73], data_in[74], data_in[75]));
 	printf("\"Power cycle cnt\": %d,\n", bytes_to_int(0, 0, data_in[76], data_in[77]));
     
