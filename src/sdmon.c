@@ -277,13 +277,13 @@ int main(int argc, const char *argv[]) {
 	printf("\"Remaining life\": %d%%,\n", (int)data_in[70]);
 	printf("\"Power cucle cnt\": %ld,\n", (long)((data_in[76] << 24) + (data_in[77] << 16) + (data_in[78] << 8) + data_in[79]));
 	printf("\"Flash ID\": 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,\n", data_in[80], data_in[81], data_in[82], data_in[83], data_in[84], data_in[85], data_in[86]);
-	printf("\"Controller\": %c%c%c%c%c%c%c,\n", data_in[88], data_in[89], data_in[90], data_in[91], data_in[92], data_in[93]);
+	printf("\"Controller\": %c%c%c%c%c%c,\n", (char)data_in[88], (char)data_in[89], (char)data_in[90], (char)data_in[91], (char)data_in[92], (char)data_in[93]);
 	printf("\"TLC read reclaim\": %ld,\n", (long)((data_in[96] << 8) + data_in[97]));
 	printf("\"SLC read reclaim\": %ld,\n", (long)((data_in[98] << 8) + data_in[99]));
 	printf("\"Firmware block refresh\": %ld,\n", (long)((data_in[100] << 8) + data_in[101]));
 	printf("\"TLC read threshold\": %ld,\n", (long)((data_in[104] << 24) + (data_in[105] << 16) + (data_in[106] << 8) + data_in[107]));
 	printf("\"SLC read threshold\": %ld,\n", (long)((data_in[108] << 24) + (data_in[109] << 16) + (data_in[110] << 8) + data_in[111]));
-	printf("\"FW version\": %c%c%c%c%c%c%c,\n", data_in[128], data_in[129], data_in[130], data_in[131], data_in[132], data_in[133]);
+	printf("\"FW version\": %c%c%c%c%c%c,\n", (char)data_in[128], (char)data_in[129], (char)data_in[130], (char)data_in[131], (char)data_in[132], (char)data_in[133]);
 	printf("\"TLC refresh cnt\": %d,\n", (int)((data_in[136] << 24) + (data_in[137] << 16) + (data_in[138] << 8) + data_in[139]));
 	printf("\"SLC refresh cnt\": %d,\n", (int)((data_in[140] << 24) + (data_in[141] << 16) + (data_in[143] << 8) + data_in[144]));
  	close(fd);
