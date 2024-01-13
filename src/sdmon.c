@@ -252,14 +252,53 @@ int main(int argc, const char *argv[]) {
     exit(0);
   }
 
- //try adata argument
+ //try ADATA, ATP argument
   cmd56_arg = 0x110005f1;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
   if (ret == 0 && !((data_in[0] == 0xff && data_in[1] == 0xff) || (data_in[0] == 0x00 && data_in[1] == 0x00))) {
 	printf("\"signature\":\"0x%x 0x%x\",\n", data_in[0], data_in[1]);
 	if (data_in[0] == 0x09 && data_in[1] == 0x41) {
-	printf("\"Adata\":\"true\",\n");
+	printf("\"ADATA, ATP\":\"true\",\n");
+			switch (data_in[16])
+	{
+		case 0x00:
+			printf("\"Bus width\": 1 bit\n");
+			break;
+		case 0x10:
+			printf("\"Bus width\": 4 bits\n");
+			break;
+	}
+	switch (data_in[18])
+	{
+		case 0x00:
+			printf("\"Speed mode\": Class 0\n");
+			break;
+		case 0x01:
+			printf("\"Speed mode\": Class 2\n");
+			break;
+		case 0x02:
+			printf("\"Speed mode\": Class 4\n");
+			break;
+		case 0x03:
+			printf("\"Speed mode\": Class 6\n");
+			break;
+		case 0x04:
+			printf("\"Speed mode\": Class 10\n");
+			break;
+	}
+	switch (data_in[19])
+	{
+		case 0x00:
+			printf("\"UHS speed grade\": Less than 10MB/s\n");
+			break;
+		case 0x01:
+			printf("\"UHS speed grade\": 10MB/s and higher\n");
+			break;
+		case 0x03:
+			printf("\"UHS speed grade\": 30MB/s and higher\n");
+			break;
+	}
 	printf("\"Factory bad block cnt\": %d,\n", (int)((data_in[24] << 8) + data_in[25]));
 	printf("\"Grown bad block cnt\": %d,\n", (int)(data_in[26]));
 	printf("\"Spare SLC block cnt\": %d,\n", (int)(data_in[27]));
@@ -275,7 +314,7 @@ int main(int argc, const char *argv[]) {
 	printf("\"Raw card capacity\": %ld MB,\n", (long)((data_in[64] << 24) + (data_in[65] << 16) + (data_in[66] << 8) + data_in[67]));
 	printf("\"PE Cycle life\": %ld,\n", (long)((data_in[68] << 8) + data_in[69]));
 	printf("\"Remaining life\": %d%%,\n", (int)data_in[70]);
-	printf("\"Power cucle cnt\": %ld,\n", (long)((data_in[76] << 24) + (data_in[77] << 16) + (data_in[78] << 8) + data_in[79]));
+	printf("\"Power cycle cnt\": %ld,\n", (long)((data_in[76] << 24) + (data_in[77] << 16) + (data_in[78] << 8) + data_in[79]));
 	printf("\"Flash ID\": 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,\n", data_in[80], data_in[81], data_in[82], data_in[83], data_in[84], data_in[85], data_in[86]);
 	printf("\"Controller\": %c%c%c%c%c%c,\n", (char)data_in[88], (char)data_in[89], (char)data_in[90], (char)data_in[91], (char)data_in[92], (char)data_in[93]);
 	printf("\"TLC read reclaim\": %ld,\n", (long)((data_in[96] << 8) + data_in[97]));
@@ -284,8 +323,8 @@ int main(int argc, const char *argv[]) {
 	printf("\"TLC read threshold\": %ld,\n", (long)((data_in[104] << 24) + (data_in[105] << 16) + (data_in[106] << 8) + data_in[107]));
 	printf("\"SLC read threshold\": %ld,\n", (long)((data_in[108] << 24) + (data_in[109] << 16) + (data_in[110] << 8) + data_in[111]));
 	printf("\"FW version\": %c%c%c%c%c%c,\n", (char)data_in[128], (char)data_in[129], (char)data_in[130], (char)data_in[131], (char)data_in[132], (char)data_in[133]);
-	printf("\"TLC refresh cnt\": %d,\n", (int)((data_in[136] << 24) + (data_in[137] << 16) + (data_in[138] << 8) + data_in[139]));
-	printf("\"SLC refresh cnt\": %d,\n", (int)((data_in[140] << 24) + (data_in[141] << 16) + (data_in[143] << 8) + data_in[144]));
+	printf("\"TLC refresh cnt\": %ld,\n", (long)((data_in[136] << 24) + (data_in[137] << 16) + (data_in[138] << 8) + data_in[139]));
+	printf("\"SLC refresh cnt\": %ld,\n", (long)((data_in[140] << 24) + (data_in[141] << 16) + (data_in[143] << 8) + data_in[144]));
  	close(fd);
 	printf("\"success\":true\n}\n");
 	exit(0);
