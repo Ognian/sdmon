@@ -252,6 +252,69 @@ int main(int argc, const char *argv[]) {
     exit(0);
   }
 
+  // try innodisk argument
+  cmd56_arg = 0x110005fd;
+  ret = CMD56_data_in(fd, cmd56_arg, data_in);
+  // we assume success when the call was successful AND the signature is not 0xff 0xff
+  if (ret == 0 && !((data_in[0] == 0xff && data_in[1] == 0xff) || (data_in[0] == 0x00 && data_in[1] == 0x00))) {
+    printf("\" signature2 \":\"0x%x 0x%x\",\n", data_in[0], data_in[1]);
+    if (data_in[0] == 0x4c && data_in[1] == 0x58) {
+	printf("\"Innodisk\":\"true\",\n");
+	switch (data_in[16])
+	{
+		case 0x00:
+			printf("\"Bus width\": 1 bit\n");
+			break;
+		case 0x10:
+			printf("\"Bus width\": 4 bits\n");
+			break;
+	}
+	switch (data_in[18])
+	{
+		case 0x00:
+			printf("\"Speed mode\": Class 0\n");
+			break;
+		case 0x01:
+			printf("\"Speed mode\": Class 2\n");
+			break;
+		case 0x02:
+			printf("\"Speed mode\": Class 4\n");
+			break;
+		case 0x03:
+			printf("\"Speed mode\": Class 6\n");
+			break;
+		case 0x04:
+			printf("\"Speed mode\": Class 10\n");
+			break;
+	}
+	switch (data_in[19])
+	{
+		case 0x00:
+			printf("\"UHS speed grade\": Less than 10MB/s\n");
+			break;
+		case 0x01:
+			printf("\"UHS speed grade\": 10MB/s and higher\n");
+			break;
+		case 0x03:
+			printf("\"UHS speed grade\": 30MB/s and higher\n");
+			break;
+	}
+	printf("\"Total spare blocks cnt\": %d,\n", data_in[24]);
+	printf("\"Factory bad blocks cnt\": %d,\n", data_in[25]);
+	printf("\"Runtime bad blocks cnt\": %d,\n", data_in[26]);
+	printf("\"Spare utilization rate\": %d%,\n", data_in[27]);
+	printf("\"SPOR failure cnt\": %d,\n", bytes_to_int(data_in[28], data_in[29], data_in[30], data_in[31]));
+	printf("\"Minimum erase cnt\": %d,\n", (long)((data_in[35]) + (data_in[34]) + (data_in[33]) + data_in[32]));
+	printf("\"Maximum erase cnt\": %d,\n", (long)((data_in[39]) + (data_in[38]) + (data_in[37]) + data_in[36]));
+	printf("\"Total erase cnt\": %d,\n", (long)((data_in[43]) + (data_in[42]) + (data_in[41]) + data_in[40]));
+	printf("\"Average erase cnt\": %d,\n", (long)((data_in[47]) + (data_in[46]) + (data_in[45]) + data_in[44]));
+	printf("\"FW version\": %c%c%c%c%c%c%c,\n", data_in[53], data_in[54], data_in[55], data_in[56], data_in[57], data_in[58], data_in[59]);
+	close(fd);
+	printf("\"success\":true\n}\n");
+	exit(0);
+    }
+  }
+
  //try adata argument
   cmd56_arg = 0x110005f1;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
