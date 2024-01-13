@@ -344,7 +344,7 @@ int main(int argc, const char *argv[]) {
 	printf("\"Runtime spare blocks cnt\": 0x%02x,\n", data_in[27]);
 	printf("\"Abnormal power loss\": %ld,\n", (long)((data_in[31] << 24) + (data_in[30] << 16) + (data_in[29] << 8) + data_in[28]));
 	printf("\"Minimum erase cnt\": %ld,\n", (long)((data_in[35] << 24) + (data_in[34] << 16) + (data_in[33] << 8) + data_in[32]));
-	printf("\"Maximum erase cnt\": %ld,\n", (long)((data_in[39]<< 24) + (data_in[38]<< 16) + (data_in[37]<< 8) + data_in[36]));
+	printf("\"Maximum erase cnt\": %d,\n", (long)((data_in[36]<< 24) + (data_in[37]<< 16) + (data_in[38]<< 8) + data_in[39]));
 	printf("\"Average erase cnt\": %ld,\n", (long)((data_in[47] << 24) + (data_in[46] << 16) + (data_in[45] << 8) + data_in[44]));
    
 	printf("\"Remaining card life\": %d%%,\n", (int)(data_in[70]));
