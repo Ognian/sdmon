@@ -511,14 +511,12 @@ int main(int argc, const char *argv[]) {
 	printf("\"Runtime spare blocks cnt\": 0x%02x,\n", data_in[27]);
 	printf("\"Abnormal power loss\": %ld,\n", (long)((data_in[31] << 24) + (data_in[30] << 16) + (data_in[29] << 8) + data_in[28]));
 	printf("\"Minimum erase cnt\": %ld,\n", (long)((data_in[35] << 24) + (data_in[34] << 16) + (data_in[33] << 8) + data_in[32]));
-	printf("\"Maximum erase cnt\": %ld,\n", (long)((data_in[39]<< 24) + (data_in[38]<< 16) + (data_in[37]<< 8) + data_in[36]));
+	printf("\"Maximum erase cnt\": %ld,\n", (long)((data_in[36]<< 24) + (data_in[37]<< 16) + (data_in[38]<< 8) + data_in[39]));
 	printf("\"Average erase cnt\": %ld,\n", (long)((data_in[47] << 24) + (data_in[46] << 16) + (data_in[45] << 8) + data_in[44]));
-   
-	printf("\"Remaining card life\": %d%%,\n", (int)(data_in[70]));
+   	printf("\"Remaining card life\": %d%%,\n", (int)(data_in[70]));
 	printf("\"Total write CRC cnt\": %d,\n", bytes_to_int(data_in[72], data_in[73], data_in[74], data_in[75]));
 	printf("\"Power cycle cnt\": %d,\n", bytes_to_int(0, 0, data_in[76], data_in[77]));
-    
-	printf("\"NAND flash ID\": 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,\n", data_in[80], data_in[81], data_in[82], data_in[83], data_in[84], data_in[85]);
+    	printf("\"NAND flash ID\": 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,\n", data_in[80], data_in[81], data_in[82], data_in[83], data_in[84], data_in[85]);
 	printf("\"IC\": %c%c%c%c%c%c%c%c,\n", data_in[87], data_in[88], data_in[89], data_in[90], data_in[91], data_in[92], data_in[93], data_in[94]);
 	printf("\"FW version\": %c%c%c%c%c%c,\n", data_in[128], data_in[129], data_in[130], data_in[131], data_in[132], data_in[133]);
 
