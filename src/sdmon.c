@@ -17,7 +17,9 @@
 
 // this include defines MMC_BLOCK_MAJOR the magic number for the calculation of
 // MMC_IOC_CMD
+#if defined(__linux__)
 #include <linux/major.h>
+#endif
 
 // since this include/linux/mmc/core.h is not available we pasted it in here
 /* From kernel linux/mmc/core.h */
@@ -47,7 +49,11 @@
 #include <errno.h>
 // this is the include defining the mmc_ioc_cmd struct and mmc_ioc_cmd_set_data
 // helper etc ...
+#if defined(__linux__)
 #include <linux/mmc/ioctl.h>
+#elif defined(__FreeBSD__)
+#include <dev/mmc/mmc_ioctl.h>
+#endif
 
 #include <time.h>
 
@@ -62,7 +68,11 @@ int CMD56_data_in(int fd, int cmd56_arg, unsigned char *lba_block_data) {
   struct mmc_ioc_cmd idata;
 
   memset(&idata, 0, sizeof(idata));
+#if defined(__linux__)
   memset(lba_block_data, 0, sizeof(__u8) * SD_BLOCK_SIZE);
+#elif defined(__FreeBSD__)
+  memset(lba_block_data, 0, sizeof(SD_BLOCK_SIZE));
+#endif
 
   idata.write_flag = 0;
   idata.opcode = SD_GEN_CMD;
@@ -83,7 +93,11 @@ int CMD56_write(int fd, int cmd56_arg) {
   char data_out[SD_BLOCK_SIZE];
 
   memset(&idata, 0, sizeof(idata));
+#if defined(__linux__)
   memset(&data_out[0], 0, sizeof(__u8) * SD_BLOCK_SIZE);
+#elif defined(__FreeBSD__)
+  memset(&data_out[0], 0, sizeof(SD_BLOCK_SIZE));
+#endif
 
   idata.write_flag = 1;
   idata.opcode = SD_GEN_CMD;
@@ -191,6 +205,12 @@ int main(int argc, const char *argv[]) {
   }
   printf("\"addTime\": \"%s\",\n", formatBool(addTime));
 
+  /*
+   * With FreeBSD, make sure kern.geom.debugflags sysctl
+   * flag has value of 16. To change, invoke the command
+   * "sysctl kern.geom.debugflags=16" or write it in the
+   * /etc/sysctl.conf.
+   */
   fd = open(device, O_RDWR);
   if (fd < 0) {
     printf("\"error\":\"device open failed\"\n}\n");
@@ -345,6 +365,7 @@ int main(int argc, const char *argv[]) {
 	printf("\"Abnormal power loss\": %ld,\n", (long)((data_in[31] << 24) + (data_in[30] << 16) + (data_in[29] << 8) + data_in[28]));
 	printf("\"Minimum erase cnt\": %ld,\n", (long)((data_in[35] << 24) + (data_in[34] << 16) + (data_in[33] << 8) + data_in[32]));
 	printf("\"Maximum erase cnt\": %ld,\n", (long)((data_in[39]<< 24) + (data_in[38]<< 16) + (data_in[37]<< 8) + data_in[36]));
+	printf("\"Total erase cnt\": %ld,\n", (long)((data_in[43]) + (data_in[42]) + (data_in[41]) + data_in[40]));
 	printf("\"Average erase cnt\": %ld,\n", (long)((data_in[47] << 24) + (data_in[46] << 16) + (data_in[45] << 8) + data_in[44]));
    
 	printf("\"Remaining card life\": %d%%,\n", (int)(data_in[70]));
