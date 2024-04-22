@@ -181,7 +181,7 @@ int main(int argc, const char *argv[]) {
   printf("{\n");
   printf("\"version\": \"%s\",\n", VERSION);
 
-  printf("\"date\": \"%d-%02d-%02dT%02d:%02d:%02d.000Z\",\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+  printf("\"date\": \"%d-%02d-%02dT%02d:%02d:%02d.000\",\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
   // this is more or less static...
   // "MMC_IOC_CMD": "c048b300", => 0xc048b300
