@@ -96,5 +96,23 @@ sudo ./sdmon /dev/mmcblk0
 "success":true
 }
 ```
-
+Western Digital Purple QD101 
+```
+sudo ./sdmon /dev/mmcblk0
+{
+"version": "v0.9.0 (4dff9b6) arm64",
+"date": "2024-08-04T23:41:55.000",
+"device":"/dev/mmcblk0",
+"addTime": "false",
+"signature":"0x44 0x57",
+"SanDisk":"true",
+"manufactureYYMMDD": "240403",
+"healthStatusPercentUsed": 1,
+"featureRevision": "0x1f",
+"generationIdentifier": 7,
+"productString": "Western Digital                 ",
+"powerOnTimes": 14,
+"success":true
+}
+```
 (c) 2018 - today, **OGI-IT**, Ognian Tschakalov and contributors, released under GNU GPL v2
