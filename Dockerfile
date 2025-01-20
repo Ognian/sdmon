@@ -1,6 +1,6 @@
 FROM alpine:latest
 ARG VERSION_STRING
-ENV VERSION_STRING ${VERSION_STRING}
+ENV VERSION_STRING=${VERSION_STRING}
 
 # Create app directory
 RUN mkdir -p /usr/src/app

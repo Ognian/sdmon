@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0 # Number of commits to fetch. 0 indicates all history for all branches and tags. Default: 1
       # - run: git version
-      - run: git show-ref --tags -d --abbrev=7
+      - run: git show-ref --tags -d --abbrev=7 || true
       # the release action ("marvinpinto/action-automatic-releases@latest") uses the 'latest' lightweight tag releases work in github
       # 'latest' is actually set by using automatic_release_tag:
       # by using something fixed like 'latest' there is only one release that has this tag
@@ -25,7 +25,7 @@ jobs:
       # looks like released versions are correct
       # 'git describe --abbrev=0 --dirty' doesn't work BUT git describe does ????
       # therefore we use 'export GIT_TAG=${GIT_TAG_LONG::-9}' instead of the above correct one ...
-      - run: git describe
+      - run: git describe || true
       - name: Set version string if prerelease
         if: ${{startsWith(github.ref, 'refs/heads/master')}} # branch master and ignore any tag see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
         run: |
@@ -60,6 +60,9 @@ jobs:
         run: mkdir -p build
       # - name: Env
       #   run: env
+      - name: Compile for linux/amd64
+        # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
+        run: docker build . --platform linux/amd64 --build-arg VERSION_STRING="${{env.version_string}} amd64" -o type=local,dest=build/amd64 && cd build/amd64/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-amd64.tar.gz sdmon
       - name: Compile for linux/arm64
         # see https://github.com/docker/buildx/blob/master/docs/reference/buildx_build.md#output this allows that all files created by docker are written somewhere
         run: docker build . --platform linux/arm64 --build-arg VERSION_STRING="${{env.version_string}} arm64" -o type=local,dest=build/arm64 && cd build/arm64/usr/src/app && tar -czf $GITHUB_WORKSPACE/build/sdmon-arm64.tar.gz sdmon
@@ -80,6 +83,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           files: |
+            build/sdmon-amd64.tar.gz
             build/sdmon-arm64.tar.gz
             build/sdmon-armv7.tar.gz
             build/sdmon-armv6.tar.gz
@@ -93,6 +97,7 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
+            build/sdmon-amd64.tar.gz
             build/sdmon-arm64.tar.gz
             build/sdmon-armv7.tar.gz
             build/sdmon-armv6.tar.gz
