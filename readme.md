@@ -4,7 +4,9 @@ This program reads out the health data of *some* industrial grade SD Cards. Unfo
 Sdmon uses CMD56 of the SD card specification and currently does this for:
 - [Apacer Industrial SD Cards](https://industrial.apacer.com/en-ww/SSD-Industrial-Card/microSD), and some others from branded distributors
 - [Kingston Industrial SD Cards](https://www.kingston.com/en/memory-cards/industrial-grade-microsd-uhs-i-u3) (SDCIT/32GB and the SDCIT2/32GB where reported to work with the -a option, see Issue #6)
+- [Kingston High Endurance SD Cards](https://www.kingston.com/en/memory-cards/high-endurance-microsd-card) (SDCE, see Issue #30)
 - [SanDisk Industrial SD Cards](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/product/embedded-flash/product-brief/product-brief-western-digital-industrial-sd-microsd.pdf) (code contributed by William Croft)
+- [Western Digital WD Purple SD Cards](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/product/embedded-flash/surveillance-wd-purple-microSD/product-brief-wd-purple-sc-qd101-ultra-endurance-microsd.pdf) (QD101)
 
 Although some of the above cards have been tested, there is no guarantee that a particular card of the above manufacturers will work. 
 
