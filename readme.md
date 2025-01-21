@@ -117,4 +117,34 @@ sudo ./sdmon /dev/mmcblk0
 "success":true
 }
 ```
+Kingston Industrial microSD Card SDCIT2
+```
+sudo ./sdmon /dev/mmcblk0
+{
+"version": "v0.8.1-18 (f492365) armv7",
+"date": "2025-01-21T17:04:54.000Z",
+"device":"/dev/mmcblk0",
+"addTime": "false",
+"read_via_cmd56_arg_1":"read successful but signature 0xff 0xff",
+"idata.response[]":"0x900 0x00 0x00 0x00",
+"flashId": ["0x98","0x3c","0x98","0xb3","0xf6","0xe3","0x08","0x1e","0x00"],
+"icVersion": ["0x1f","0xc3"],
+"fwVersion": [38,240],
+"ceNumber": "0x01",
+"spareBlockCount": 12,
+"initialBadBlockCount": 12,
+"goodBlockRatePercent": 99.38,
+"totalEraseCount": 1707,
+"enduranceRemainLifePercent": 100.00,
+"avgEraseCount": 1,
+"minEraseCount": 1,
+"maxEraseCount": 13,
+"powerUpCount": 46,
+"abnormalPowerOffCount": 0,
+"totalRefreshCount": 0,
+"productMarker": ["0x70","0x53","0x4c","0x43","0x00","0x00","0x00","0x00"],
+"laterBadBlockCount": 0,
+"success":true
+}
+```
 (c) 2018 - today, **OGI-IT**, Ognian Tschakalov and contributors, released under GNU GPL v2
