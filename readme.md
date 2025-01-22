@@ -147,4 +147,9 @@ sudo ./sdmon /dev/mmcblk0
 "success":true
 }
 ```
+
+## Licenses
+
+This project uses the [json](https://github.com/json-parser/json-parser) and [json-builder](https://github.com/json-parser/json-builder) libraries, licensed under the BSD-2-Clause License. Their .c and .h source files have simply been added untouched to the source tree, as suggested in their readme file. The headers of these files contain more details about the license.
+
 (c) 2018 - today, **OGI-IT**, Ognian Tschakalov and contributors, released under GNU GPL v2

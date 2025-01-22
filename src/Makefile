@@ -2,10 +2,10 @@
 
 #VERSION = 0.01
 CC      = /usr/bin/gcc
-CFLAGS  = -Wall -g -D_REENTRANT -DVERSION="\"$(VERSION_STRING)\"" -static
-LDFLAGS =
+CFLAGS  = -Wall -g -D_REENTRANT -DVERSION="\"$(VERSION_STRING)\"" -I. -static
+LDFLAGS = -lm
 
-OBJ = sdmon.o
+OBJ = sdmon.o json.o json-builder.o
 BIN = sdmon
 
 $(BIN): $(OBJ)
