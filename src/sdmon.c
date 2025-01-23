@@ -153,7 +153,7 @@ int nword_to_int(unsigned char *data, int offset, int size) {
   if (size == 4) {
     return ((data[offset + 3] << 24) | (data[offset + 2] << 16) | (data[offset + 1] << 8) | data[offset]);
   } else if (size == 8) {
-    return (((long long)data[offset + 3] << 56) | ((long long)data[offset + 3] << 48) | ((long long)data[offset + 3] << 40) | ((long long)data[offset + 3] << 32) |
+    return (((long long)data[offset + 7] << 56) | ((long long)data[offset + 6] << 48) | ((long long)data[offset + 5] << 40) | ((long long)data[offset + 4] << 32) |
             ((long long)data[offset + 3] << 24) | ((long long)data[offset + 2] << 16) | ((long long)data[offset + 1] << 8) | (long long)data[offset]);
   } else {
     return -1;
