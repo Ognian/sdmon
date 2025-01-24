@@ -57,6 +57,13 @@
 
 #include <time.h>
 
+// for now, hardcode VERBOSE_LEVEL, we'll be able
+// to add -v/-q cmdline options later to be able
+// to adjust it at runtime
+#define VERBOSE_LEVEL 1
+#define verbose1(...) if (VERBOSE_LEVEL >= 1) fprintf(stderr, __VA_ARGS__)
+#define verbose2(...) if (VERBOSE_LEVEL >= 2) fprintf(stderr, __VA_ARGS__)
+
 // CMD56 implementation
 #define SD_GEN_CMD 56
 #define SD_BLOCK_SIZE 512
@@ -128,7 +135,7 @@ int CMD56_write(int fd, int cmd56_arg) {
   //    printf("ioctl errror\n");
 
   // see idata.response[0] -[3] but it is 0
-  printf("\"idata.response[]\":\"0x%02x 0x%02x 0x%02x 0x%02x\",\n", idata.response[0], idata.response[1], idata.response[2], idata.response[3]);
+  verbose2("idata.response[]: 0x%02x 0x%02x 0x%02x 0x%02x\n", idata.response[0], idata.response[1], idata.response[2], idata.response[3]);
 
   return ret;
 }
@@ -136,14 +143,14 @@ int CMD56_write(int fd, int cmd56_arg) {
 // helper
 void dump_data_block(char *lba_block_data) {
   int count = 0;
-  printf("CMD56 data block dumping:");
+  verbose2("CMD56 data block dumping:");
   while (count < SD_BLOCK_SIZE) {
     if (count % 16 == 0)
-      printf("\n%03d:  ", count);
-    printf("%02x ", lba_block_data[count]);
+      verbose2("\n%03d:  ", count);
+    verbose2("%02x ", lba_block_data[count]);
     count++;
   }
-  printf("\n");
+  verbose2("\n");
   return;
 }
 
@@ -218,6 +225,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // first try if read with arg 1 returns anything
+  verbose1("Trying longsys...\n");
   cmd56_arg = 0x00000001;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
@@ -273,6 +281,7 @@ int main(int argc, const char *argv[]) {
   }
 
   //try adata argument
+  verbose1("Trying adata...\n");
   cmd56_arg = 0x110005f1;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
@@ -313,6 +322,7 @@ int main(int argc, const char *argv[]) {
   }
 
   //try transcend argument
+  verbose1("Trying transcend...\n");
   cmd56_arg = 0x110005f9;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
@@ -380,6 +390,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // try micron argument
+  verbose1("Trying micron...\n");
   cmd56_arg = 0x110005fb;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
@@ -397,6 +408,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // try swissbit argument
+  verbose1("Trying swissbit...\n");
   cmd56_arg = 0x53420001;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
@@ -466,6 +478,7 @@ int main(int argc, const char *argv[]) {
     printf("\"read_via_cmd56_arg_1\":\"not implemented: %s\",\n", strerror(errno));
   }
 
+  verbose1("Trying 2step...\n");
   // prepare for health command
   cmd56_arg = 0x00000010; // all other are 0
   ret = CMD56_write(fd, cmd56_arg);
