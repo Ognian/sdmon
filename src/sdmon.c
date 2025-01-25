@@ -14,6 +14,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdarg.h>
+#include <inttypes.h>
+
+#include "json-builder.h"
 
 // this include defines MMC_BLOCK_MAJOR the magic number for the calculation of
 // MMC_IOC_CMD
@@ -67,8 +71,6 @@
 // CMD56 implementation
 #define SD_GEN_CMD 56
 #define SD_BLOCK_SIZE 512
-
-#define formatBool(b) ((b) ? "true" : "false")
 
 int CMD56_data_in(int fd, int cmd56_arg, unsigned char *lba_block_data) {
   int ret = 0;
@@ -158,7 +160,7 @@ void dump_data_block(char *lba_block_data) {
 int bytes_to_int(unsigned char byte1, unsigned char byte2, unsigned char byte3, unsigned char byte4) { return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4; }
 
 // convert Little Endian words to int
-int nword_to_int(unsigned char *data, int offset, int size) {
+json_int_t nword_to_int(unsigned char *data, int offset, int size) {
   if (size == 4) {
     return ((data[offset + 3] << 24) | (data[offset + 2] << 16) | (data[offset + 1] << 8) | data[offset]);
   } else if (size == 8) {
@@ -170,7 +172,7 @@ int nword_to_int(unsigned char *data, int offset, int size) {
 }
 
 // convert Big Endian words to int
-int nwordbe_to_int(unsigned char *data, int offset, int size) {
+json_int_t nwordbe_to_int(unsigned char *data, int offset, int size) {
   if (size == 4) {
     return ((data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3]);
   } else if (size == 8) {
@@ -179,6 +181,46 @@ int nwordbe_to_int(unsigned char *data, int offset, int size) {
   } else {
     return -1;
   }
+}
+
+// take a json_value, print it and free it
+void json_print_and_free(json_value *j) {
+  json_serialize_opts jso;
+  memset(&jso, 0, sizeof(jso));
+  jso.indent_size = 2;
+  jso.mode = json_serialize_mode_multiline;
+  // jso.opts = json_serialize_opt_no_space_after_comma | json_serialize_opt_no_space_after_colon;
+
+  char *printbuf = malloc(json_measure_ex(j, jso));
+  json_serialize_ex(printbuf, j, jso);
+  puts(printbuf);
+  free(printbuf);
+  json_builder_free(j);
+}
+
+// helper to build a formatted string and its json_value
+// we first declare the func to tell the compiler that it
+// should check the params as for printf
+json_value *json_sprintf_new(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+
+// then we define the func, it returns the built json_value*
+json_value *json_sprintf_new(const char *fmt, ...) {
+  va_list args;
+  char dststr[128];
+  va_start(args, fmt);
+  vsnprintf(dststr, 128, fmt, args);
+  va_end(args);
+  return json_string_new(dststr);
+}
+
+// helper to build a json array of formatted strings
+// representing an array of values, return the
+// corresponding json_value* we've built
+json_value *json_array_build(const char *fmt, const unsigned char *data, size_t offset, size_t size) {
+  json_value *arr = json_array_new(size);
+  for (size_t i = 0; i < size; i++)
+    json_array_push(arr, json_sprintf_new(fmt, data[offset + i]));
+  return arr;
 }
 
 int main(int argc, const char *argv[]) {
@@ -198,33 +240,33 @@ int main(int argc, const char *argv[]) {
   bool addTime = false;
   const char *option;
 
-  // json output
-  printf("{\n");
-  printf("\"version\": \"%s\",\n", VERSION);
-
-  printf("\"date\": \"%d-%02d-%02dT%02d:%02d:%02d.000\",\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+  json_value *j = json_object_new(0);
+  json_object_push(j, "version", json_string_new(VERSION));
+  json_object_push(j, "date", json_sprintf_new("%d-%02d-%02dT%02d:%02d:%02d.000", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec));
 
   // this is more or less static...
   // "MMC_IOC_CMD": "c048b300", => 0xc048b300
   // printf("\"MMC_IOC_CMD\": \"%lx\",\n", MMC_IOC_CMD);
 
   if (argc < 2 || argc > 3) {
-    printf("\"usage\":\"wrong argument count, sdmon <device> [-a]\"\n}\n");
+    json_object_push(j, "usage", json_string_new("wrong argument count, sdmon <device> [-a]"));
+    json_print_and_free(j);
     exit(1);
   }
   device = argv[1];
-  printf("\"device\":\"%s\",\n", device);
+  json_object_push(j, "device", json_string_new(device));
 
   if (argc > 2) {
     option = argv[2];
     if (strcmp(option, "-a") == 0) {
       addTime = true;
     } else {
-      printf("\"usage\":\"wrong option, sdmon <device> [-a]\"\n}\n");
+      json_object_push(j, "usage", json_string_new("wrong option, sdmon <device> [-a]"));
+      json_print_and_free(j);
       exit(1);
     }
   }
-  printf("\"addTime\": \"%s\",\n", formatBool(addTime));
+  json_object_push(j, "addTime", json_boolean_new(addTime ? 1 : 0));
 
   /*
    * With FreeBSD, make sure kern.geom.debugflags sysctl
@@ -234,7 +276,8 @@ int main(int argc, const char *argv[]) {
    */
   fd = open(device, O_RDWR);
   if (fd < 0) {
-    printf("\"error\":\"device open failed\"\n}\n");
+    json_object_push(j, "error", json_sprintf_new("device open failed (%s)", strerror(errno)));
+    json_print_and_free(j);
     exit(1);
   }
 
@@ -244,30 +287,31 @@ int main(int argc, const char *argv[]) {
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
   if (ret == 0 && !((data_in[0] == 0xff && data_in[1] == 0xff) || (data_in[0] == 0x00 && data_in[1] == 0x00))) {
-    printf("\"signature\":\"0x%x 0x%x\",\n", data_in[0], data_in[1]);
+    json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
 
     if (data_in[0] == 0x70 && data_in[1] == 0x58) {
-      printf("\"Longsys\":\"true\",\n");
-      printf("\"SMARTVersions\": %d,\n", nword_to_int(data_in, 4, 4));
-      printf("\"sizeOfDevSMART\": %d,\n", nword_to_int(data_in, 12, 4));
-      printf("\"originalBadBlock\": %d,\n", nword_to_int(data_in, 16, 4));
-      printf("\"increaseBadBlock\": %d,\n", nword_to_int(data_in, 20, 4));
-      printf("\"writeAllSectNum\": %d Sector(512Byte),\n", nword_to_int(data_in, 24, 8));
-      printf("\"replaceBlockLeft\": %d,\n", nword_to_int(data_in, 32, 4));
-      printf("\"degreOfWear\": %.02f Cycle,\n", (float)nword_to_int(data_in, 36, 4) / 1000);
-      printf("\"sectorTotal\": %d,\n", nword_to_int(data_in, 40, 4));
-      printf("\"remainLifeTime\": %d%%,\n", nword_to_int(data_in, 44, 4));
-      printf("\"remainWrGBNum\": %.02fTB,\n", (float)nword_to_int(data_in, 48, 4) / 1024);
-      printf("\"lifeTimeTotal\": %.02f Cycle,\n", (float)nword_to_int(data_in, 52, 4));
-      printf("\"phyWrGBNum\": %.02fTB,\n", (float)nword_to_int(data_in, 56, 4) / 1024);
+      json_object_push(j, "Longsys", json_boolean_new(1));
+      json_object_push(j, "SMARTVersions", json_integer_new(nword_to_int(data_in, 4, 4)));
+      json_object_push(j, "sizeOfDevSMART", json_integer_new(nword_to_int(data_in, 12, 4)));
+      json_object_push(j, "originalBadBlock", json_integer_new(nword_to_int(data_in, 16, 4)));
+      json_object_push(j, "increaseBadBlock", json_integer_new(nword_to_int(data_in, 20, 4)));
+      json_object_push(j, "writeAllSectNum", json_integer_new(nword_to_int(data_in, 24, 8)));
+      json_object_push(j, "replaceBlockLeft", json_integer_new(nword_to_int(data_in, 32, 4)));
+      json_object_push(j, "degreeOfWear", json_sprintf_new("%.02f Cycle", (float)nword_to_int(data_in, 36, 4) / 1000.0));
+      json_object_push(j, "sectorTotal", json_integer_new(nword_to_int(data_in, 40, 4)));
+      json_object_push(j, "remainLifeTime", json_sprintf_new("%" PRId64 "%%", nword_to_int(data_in, 44, 4)));
+      json_object_push(j, "remainWrGBNum", json_sprintf_new("%.02fTB", (float)nword_to_int(data_in, 48, 4) / 1024));
+      json_object_push(j, "lifeTimeTotal", json_sprintf_new("%.02f Cycle", (float)nword_to_int(data_in, 52, 4)));
+      json_object_push(j, "phyWrGBNum", json_sprintf_new("%.02fTB", (float)nword_to_int(data_in, 56, 4) / 1024));
 
       close(fd);
-      printf("\"success\":true\n}\n");
+      json_object_push(j, "success", json_boolean_new(1));
+      json_print_and_free(j);
       exit(0);
     }
 
     if (data_in[0] == 0x44 && (data_in[1] == 0x53 || data_in[1] == 0x57)) {
-      printf("\"SanDisk\":\"true\",\n");
+      json_object_push(j, "SanDisk", json_boolean_new(1));
     }
 
     /*
@@ -281,16 +325,16 @@ int main(int argc, const char *argv[]) {
 
     strncpy(tmpstr, (char *)&data_in[2], 6);
     tmpstr[6] = 0;
-    printf("\"manufactureYYMMDD\": \"%s\",\n", tmpstr);
-    printf("\"healthStatusPercentUsed\": %d,\n", data_in[8]);
-    printf("\"featureRevision\": \"0x%x\",\n", data_in[11]);
-    printf("\"generationIdentifier\": %d,\n", data_in[14]);
+    json_object_push(j, "manufactureYYMMDD", json_string_new(tmpstr));
+    json_object_push(j, "healthStatusPercentUsed", json_integer_new(data_in[8]));
+    json_object_push(j, "featureRevision", json_sprintf_new("0x%x", data_in[11]));
+    json_object_push(j, "generationIdentifier", json_integer_new(data_in[14]));
     strncpy(tmpstr, (char *)&data_in[49], 32);
     tmpstr[32] = 0;
-    printf("\"productString\": \"%s\",\n", tmpstr);
-    printf("\"powerOnTimes\": %d,\n", bytes_to_int(0, data_in[24], data_in[25], data_in[26]));
+    json_object_push(j, "productString", json_string_new(tmpstr));
+    json_object_push(j, "powerOnTimes", json_integer_new(bytes_to_int(0, data_in[24], data_in[25], data_in[26])));
     close(fd);
-    printf("\"success\":true\n}\n");
+    json_object_push(j, "success", json_boolean_new(1));
     exit(0);
   }
 
@@ -300,37 +344,37 @@ int main(int argc, const char *argv[]) {
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
   if (ret == 0 && !((data_in[0] == 0xff && data_in[1] == 0xff) || (data_in[0] == 0x00 && data_in[1] == 0x00))) {
-    printf("\"signature\":\"0x%x 0x%x\",\n", data_in[0], data_in[1]);
+    json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
     if (data_in[0] == 0x09 && data_in[1] == 0x41) {
-      printf("\"Adata\":\"true\",\n");
-      printf("\"Factory bad block cnt\": %d,\n", (int)((data_in[24] << 8) + data_in[25]));
-      printf("\"Grown bad block cnt\": %d,\n", (int)(data_in[26]));
-      printf("\"Spare SLC block cnt\": %d,\n", (int)(data_in[27]));
-      printf("\"Spare block cnt\": %d,\n", (int)((data_in[30] << 8) + data_in[31]));
-      printf("\"Data area minimum erase cnt\": %ld,\n", (long)((data_in[32] << 24) + (data_in[33] << 16) + (data_in[34] << 8) + data_in[35]));
-      printf("\"Data area maximum erase cnt\": %ld,\n", (long)((data_in[36] << 24) + (data_in[37] << 16) + (data_in[38] << 8) + data_in[39]));
-      printf("\"Data area total erase cnt\": %ld,\n", (long)((data_in[40] << 24) + (data_in[41] << 16) + (data_in[42] << 8) + data_in[43]));
-      printf("\"Data area average erase cnt\": %ld,\n", (long)((data_in[44] << 24) + (data_in[45] << 16) + (data_in[46] << 8) + data_in[47]));
-      printf("\"System area minimum erase cnt\": %ld,\n", (long)((data_in[48] << 24) + (data_in[49] << 16) + (data_in[50] << 8) + data_in[51]));
-      printf("\"System area maximum erase cnt\": %ld,\n", (long)((data_in[52] << 24) + (data_in[53] << 16) + (data_in[54] << 8) + data_in[55]));
-      printf("\"System area total erase count\": %ld,\n", (long)((data_in[56] << 24) + (data_in[57] << 16) + (data_in[58] << 8) + data_in[59]));
-      printf("\"System area average erase cnt\": %ld,\n", (long)((data_in[60] << 24) + (data_in[61] << 16) + (data_in[62] << 8) + data_in[63]));
-      printf("\"Raw card capacity\": %ld MB,\n", (long)((data_in[64] << 24) + (data_in[65] << 16) + (data_in[66] << 8) + data_in[67]));
-      printf("\"PE Cycle life\": %ld,\n", (long)((data_in[68] << 8) + data_in[69]));
-      printf("\"Remaining life\": %d%%,\n", (int)data_in[70]);
-      printf("\"Power cucle cnt\": %ld,\n", (long)((data_in[76] << 24) + (data_in[77] << 16) + (data_in[78] << 8) + data_in[79]));
-      printf("\"Flash ID\": 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,\n", data_in[80], data_in[81], data_in[82], data_in[83], data_in[84], data_in[85], data_in[86]);
-      printf("\"Controller\": %c%c%c%c%c%c,\n", (char)data_in[88], (char)data_in[89], (char)data_in[90], (char)data_in[91], (char)data_in[92], (char)data_in[93]);
-      printf("\"TLC read reclaim\": %ld,\n", (long)((data_in[96] << 8) + data_in[97]));
-      printf("\"SLC read reclaim\": %ld,\n", (long)((data_in[98] << 8) + data_in[99]));
-      printf("\"Firmware block refresh\": %ld,\n", (long)((data_in[100] << 8) + data_in[101]));
-      printf("\"TLC read threshold\": %ld,\n", (long)((data_in[104] << 24) + (data_in[105] << 16) + (data_in[106] << 8) + data_in[107]));
-      printf("\"SLC read threshold\": %ld,\n", (long)((data_in[108] << 24) + (data_in[109] << 16) + (data_in[110] << 8) + data_in[111]));
-      printf("\"FW version\": %c%c%c%c%c%c,\n", (char)data_in[128], (char)data_in[129], (char)data_in[130], (char)data_in[131], (char)data_in[132], (char)data_in[133]);
-      printf("\"TLC refresh cnt\": %d,\n", (int)((data_in[136] << 24) + (data_in[137] << 16) + (data_in[138] << 8) + data_in[139]));
-      printf("\"SLC refresh cnt\": %d,\n", (int)((data_in[140] << 24) + (data_in[141] << 16) + (data_in[143] << 8) + data_in[144]));
+      json_object_push(j, "Adata", json_boolean_new(1));
+      json_object_push(j, "Factory bad block cnt", json_integer_new((int)((data_in[24] << 8) + data_in[25])));
+      json_object_push(j, "Grown bad block cnt", json_integer_new((int)(data_in[26])));
+      json_object_push(j, "Spare SLC block cnt", json_integer_new((int)(data_in[27])));
+      json_object_push(j, "Spare block cnt", json_integer_new((int)((data_in[30] << 8) + data_in[31])));
+      json_object_push(j, "Data area minimum erase cnt", json_integer_new((long)((data_in[32] << 24) + (data_in[33] << 16) + (data_in[34] << 8) + data_in[35])));
+      json_object_push(j, "Data area maximum erase cnt", json_integer_new((long)((data_in[36] << 24) + (data_in[37] << 16) + (data_in[38] << 8) + data_in[39])));
+      json_object_push(j, "Data area total erase cnt", json_integer_new((long)((data_in[40] << 24) + (data_in[41] << 16) + (data_in[42] << 8) + data_in[43])));
+      json_object_push(j, "Data area average erase cnt", json_integer_new((long)((data_in[44] << 24) + (data_in[45] << 16) + (data_in[46] << 8) + data_in[47])));
+      json_object_push(j, "System area minimum erase cnt", json_integer_new((long)((data_in[48] << 24) + (data_in[49] << 16) + (data_in[50] << 8) + data_in[51])));
+      json_object_push(j, "System area maximum erase cnt", json_integer_new((long)((data_in[52] << 24) + (data_in[53] << 16) + (data_in[54] << 8) + data_in[55])));
+      json_object_push(j, "System area total erase count", json_integer_new((long)((data_in[56] << 24) + (data_in[57] << 16) + (data_in[58] << 8) + data_in[59])));
+      json_object_push(j, "System area average erase cnt", json_integer_new((long)((data_in[60] << 24) + (data_in[61] << 16) + (data_in[62] << 8) + data_in[63])));
+      json_object_push(j, "Raw card capacity", json_sprintf_new("%ld MB", (long)((data_in[64] << 24) + (data_in[65] << 16) + (data_in[66] << 8) + data_in[67])));
+      json_object_push(j, "PE Cycle life", json_integer_new((long)((data_in[68] << 8) + data_in[69])));
+      json_object_push(j, "Remaining life", json_sprintf_new("%d%%", (int)data_in[70]));
+      json_object_push(j, "Power cycle cnt", json_integer_new((long)((data_in[76] << 24) + (data_in[77] << 16) + (data_in[78] << 8) + data_in[79])));
+      json_object_push(j, "Flash ID", json_sprintf_new("0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x", data_in[80], data_in[81], data_in[82], data_in[83], data_in[84], data_in[85], data_in[86]));
+      json_object_push(j, "Controller", json_sprintf_new("%c%c%c%c%c%c", (char)data_in[88], (char)data_in[89], (char)data_in[90], (char)data_in[91], (char)data_in[92], (char)data_in[93]));
+      json_object_push(j, "TLC read reclaim", json_integer_new((long)((data_in[96] << 8) + data_in[97])));
+      json_object_push(j, "SLC read reclaim", json_integer_new((long)((data_in[98] << 8) + data_in[99])));
+      json_object_push(j, "Firmware block refresh", json_integer_new((long)((data_in[100] << 8) + data_in[101])));
+      json_object_push(j, "TLC read threshold", json_integer_new((long)((data_in[104] << 24) + (data_in[105] << 16) + (data_in[106] << 8) + data_in[107])));
+      json_object_push(j, "SLC read threshold", json_integer_new((long)((data_in[108] << 24) + (data_in[109] << 16) + (data_in[110] << 8) + data_in[111])));
+      json_object_push(j, "FW version", json_sprintf_new("%c%c%c%c%c%c", (char)data_in[128], (char)data_in[129], (char)data_in[130], (char)data_in[131], (char)data_in[132], (char)data_in[133]));
+      json_object_push(j, "TLC refresh cnt", json_integer_new((int)((data_in[136] << 24) + (data_in[137] << 16) + (data_in[138] << 8) + data_in[139])));
+      json_object_push(j, "SLC refresh cnt", json_integer_new((int)((data_in[140] << 24) + (data_in[141] << 16) + (data_in[143] << 8) + data_in[144])));
       close(fd);
-      printf("\"success\":true\n}\n");
+      json_object_push(j, "success", json_boolean_new(1));
       exit(0);
     }
   }
@@ -341,64 +385,64 @@ int main(int argc, const char *argv[]) {
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
   if (ret == 0 && !((data_in[0] == 0xff && data_in[1] == 0xff) || (data_in[0] == 0x00 && data_in[1] == 0x00))) {
-    printf("\"signature\":\"0x%x 0x%x\",\n", data_in[0], data_in[1]);
+    json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
     if (data_in[0] == 0x54 && data_in[1] == 0x72) {
-      printf("\"Transcend\":\"true\",\n");
-      printf("\"Secured mode\": %d,\n", (int)(data_in[11]));
+      json_object_push(j, "Transcend", json_boolean_new(1));
+      json_object_push(j, "Secured mode", json_integer_new((int)(data_in[11])));
       switch (data_in[16]) {
       case 0x00:
-        printf("\"Bus width\": 1 bit\n");
+        json_object_push(j, "Bus width", json_string_new("1 bit"));
         break;
       case 0x10:
-        printf("\"Bus width\": 4 bits\n");
+        json_object_push(j, "Bus width", json_string_new("4 bits"));
         break;
       }
       switch (data_in[18]) {
       case 0x00:
-        printf("\"Speed mode\": Class 0\n");
+        json_object_push(j, "Speed mode", json_string_new("Class 0"));
         break;
       case 0x01:
-        printf("\"Speed mode\": Class 2\n");
+        json_object_push(j, "Speed mode", json_string_new("Class 2"));
         break;
       case 0x02:
-        printf("\"Speed mode\": Class 4\n");
+        json_object_push(j, "Speed mode", json_string_new("Class 4"));
         break;
       case 0x03:
-        printf("\"Speed mode\": Class 6\n");
+        json_object_push(j, "Speed mode", json_string_new("Class 6"));
         break;
       case 0x04:
-        printf("\"Speed mode\": Class 10\n");
+        json_object_push(j, "Speed mode", json_string_new("Class 10"));
         break;
       }
       switch (data_in[19]) {
       case 0x00:
-        printf("\"UHS speed grade\": Less than 10MB/s\n");
+        json_object_push(j, "UHS speed grade", json_string_new("Less than 10MB/s"));
         break;
       case 0x01:
-        printf("\"UHS speed grade\": 10MB/s and higher\n");
+        json_object_push(j, "UHS speed grade", json_string_new("10MB/s and higher"));
         break;
       case 0x03:
-        printf("\"UHS speed grade\": 30MB/s and higher\n");
+        json_object_push(j, "UHS speed grade", json_string_new("30MB/s and higher"));
         break;
       }
-      printf("\"New bad blocks cnt\": 0x%02x,\n", data_in[26]);
-      printf("\"Runtime spare blocks cnt\": 0x%02x,\n", data_in[27]);
-      printf("\"Abnormal power loss\": %ld,\n", (long)((data_in[31] << 24) + (data_in[30] << 16) + (data_in[29] << 8) + data_in[28]));
-      printf("\"Minimum erase cnt\": %ld,\n", (long)((data_in[35] << 24) + (data_in[34] << 16) + (data_in[33] << 8) + data_in[32]));
-      printf("\"Maximum erase cnt\": %ld,\n", (long)((data_in[39] << 24) + (data_in[38] << 16) + (data_in[37] << 8) + data_in[36]));
-      printf("\"Total erase cnt\": %ld,\n", (long)((data_in[43]) + (data_in[42]) + (data_in[41]) + data_in[40]));
-      printf("\"Average erase cnt\": %ld,\n", (long)((data_in[47] << 24) + (data_in[46] << 16) + (data_in[45] << 8) + data_in[44]));
+      json_object_push(j, "New bad blocks cnt", json_sprintf_new("0x%02x", data_in[26]));
+      json_object_push(j, "Runtime spare blocks cnt", json_sprintf_new("0x%02x", data_in[27]));
+      json_object_push(j, "Abnormal power loss", json_integer_new((long)((data_in[31] << 24) + (data_in[30] << 16) + (data_in[29] << 8) + data_in[28])));
+      json_object_push(j, "Minimum erase cnt", json_integer_new((long)((data_in[35] << 24) + (data_in[34] << 16) + (data_in[33] << 8) + data_in[32])));
+      json_object_push(j, "Maximum erase cnt", json_integer_new((long)((data_in[39] << 24) + (data_in[38] << 16) + (data_in[37] << 8) + data_in[36])));
+      json_object_push(j, "Total erase cnt", json_integer_new((long)((data_in[43]) + (data_in[42]) + (data_in[41]) + data_in[40])));
+      json_object_push(j, "Average erase cnt", json_integer_new((long)((data_in[47] << 24) + (data_in[46] << 16) + (data_in[45] << 8) + data_in[44])));
 
-      printf("\"Remaining card life\": %d%%,\n", (int)(data_in[70]));
-      printf("\"Total write CRC cnt\": %d,\n", bytes_to_int(data_in[72], data_in[73], data_in[74], data_in[75]));
-      printf("\"Power cycle cnt\": %d,\n", bytes_to_int(0, 0, data_in[76], data_in[77]));
+      json_object_push(j, "Remaining card life", json_sprintf_new("%d%%", (int)(data_in[70])));
+      json_object_push(j, "Total write CRC cnt", json_integer_new(bytes_to_int(data_in[72], data_in[73], data_in[74], data_in[75])));
+      json_object_push(j, "Power cycle cnt", json_integer_new(bytes_to_int(0, 0, data_in[76], data_in[77])));
 
-      printf("\"NAND flash ID\": 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,\n", data_in[80], data_in[81], data_in[82], data_in[83], data_in[84], data_in[85]);
-      printf("\"IC\": %c%c%c%c%c%c%c%c,\n", data_in[87], data_in[88], data_in[89], data_in[90], data_in[91], data_in[92], data_in[93], data_in[94]);
-      printf("\"fw version\": %c%c%c%c%c%c,\n", data_in[128], data_in[129], data_in[130], data_in[131], data_in[132], data_in[133]);
+      json_object_push(j, "NAND flash ID", json_sprintf_new("0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x", data_in[80], data_in[81], data_in[82], data_in[83], data_in[84], data_in[85]));
+      json_object_push(j, "IC", json_sprintf_new("%c%c%c%c%c%c%c%c", data_in[87], data_in[88], data_in[89], data_in[90], data_in[91], data_in[92], data_in[93], data_in[94]));
+      json_object_push(j, "fw version", json_sprintf_new("%c%c%c%c%c%c", data_in[128], data_in[129], data_in[130], data_in[131], data_in[132], data_in[133]));
 
       close(fd);
-      printf("\"success\":true\n}\n");
+      json_object_push(j, "success", json_boolean_new(1));
       exit(0);
     }
   }
@@ -409,14 +453,14 @@ int main(int argc, const char *argv[]) {
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
   if (ret == 0 && !((data_in[0] == 0xff && data_in[1] == 0xff) || (data_in[0] == 0x00 && data_in[1] == 0x00))) {
-    printf("\" signature \":\"0x%x 0x%x\",\n", data_in[0], data_in[1]);
+    json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
     if (data_in[0] == 0x4d && data_in[1] == 0x45) {
-      printf("\"Micron\":\"true\",\n");
-      printf("\"Percentange step utilization\": %d,\n", (int)(data_in[7]));
-      printf("\"TLC area utilization\": %d,\n", (int)(data_in[8]));
-      printf("\"SLC area utilization\": %d,\n", (int)(data_in[9]));
+      json_object_push(j, "Micron", json_boolean_new(1));
+      json_object_push(j, "Percentange step utilization", json_integer_new((int)(data_in[7])));
+      json_object_push(j, "TLC area utilization", json_integer_new((int)(data_in[8])));
+      json_object_push(j, "SLC area utilization", json_integer_new((int)(data_in[9])));
       close(fd);
-      printf("\"success\":true\n}\n");
+      json_object_push(j, "success", json_boolean_new(1));
       exit(0);
     }
   }
@@ -427,70 +471,70 @@ int main(int argc, const char *argv[]) {
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   // we assume success when the call was successful AND the signature is not 0xff 0xff
   if (ret == 0 && !((data_in[0] == 0xff && data_in[1] == 0xff) || (data_in[0] == 0x00 && data_in[1] == 0x00))) {
-    printf("\"signature\":\"0x%x 0x%x\",\n", data_in[0], data_in[1]);
+    json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
 
     if (data_in[0] == 0x53 && data_in[1] == 0x77) {
       printf("\"Swissbit\":\"true\",\n");
       strncpy(tmpstr, (char *)&data_in[32], 16);
       tmpstr[16] = 0;
-      printf("\"fwVersion\": \"%s\",\n", tmpstr);
-      printf("\"User area rated cycles\": %d,\n", nwordbe_to_int(data_in, 48, 4));
-      printf("\"User area max cycle cnt\": %d,\n", nwordbe_to_int(data_in, 52, 4));
-      printf("\"User area total cycle cnt\": %d,\n", nwordbe_to_int(data_in, 56, 4));
-      printf("\"User area average cycle cnt\": %d,\n", nwordbe_to_int(data_in, 60, 4));
-      printf("\"System area max cycle cnt\": %d,\n", nwordbe_to_int(data_in, 68, 4));
-      printf("\"System area total cycle cnt\": %d,\n", nwordbe_to_int(data_in, 72, 4));
-      printf("\"System area average cycle cnt\": %d,\n", nwordbe_to_int(data_in, 76, 4));
-      printf("\"Remaining Lifetime Percent\": %d%%,\n", (int)(data_in[80]));
+      json_object_push(j, "fwVersion", json_string_new(tmpstr));
+      json_object_push(j, "User area rated cycles", json_integer_new(nwordbe_to_int(data_in, 48, 4)));
+      json_object_push(j, "User area max cycle cnt", json_integer_new(nwordbe_to_int(data_in, 52, 4)));
+      json_object_push(j, "User area total cycle cnt", json_integer_new(nwordbe_to_int(data_in, 56, 4)));
+      json_object_push(j, "User area average cycle cnt", json_integer_new(nwordbe_to_int(data_in, 60, 4)));
+      json_object_push(j, "User area max cycle cnt", json_integer_new(nwordbe_to_int(data_in, 68, 4)));
+      json_object_push(j, "User area total cycle cnt", json_integer_new(nwordbe_to_int(data_in, 72, 4)));
+      json_object_push(j, "User area average cycle cnt", json_integer_new(nwordbe_to_int(data_in, 76, 4)));
+      json_object_push(j, "Remaining Lifetime Percent", json_integer_new((int)(data_in[80])));
       switch (data_in[86]) {
       case 0x00:
-        printf("\"Speed mode\": Default speed\n");
+        json_object_push(j, "Speed mode", json_string_new("Default speed"));
         break;
       case 0x01:
-        printf("\"Speed mode\": High speed\n");
+        json_object_push(j, "Speed mode", json_string_new("High speed"));
         break;
       case 0x10:
-        printf("\"Speed mode\": SDR12 speed\n");
+        json_object_push(j, "Speed mode", json_string_new("SDR12 speed"));
         break;
       case 0x11:
-        printf("\"Speed mode\": SDR25 speed\n");
+        json_object_push(j, "Speed mode", json_string_new("SDR25 speed"));
         break;
       case 0x12:
-        printf("\"Speed mode\": SDR50 speed\n");
+        json_object_push(j, "Speed mode", json_string_new("SDR50 speed"));
         break;
       case 0x14:
-        printf("\"Speed mode\": DDR50 speed\n");
+        json_object_push(j, "Speed mode", json_string_new("DDR50 speed"));
         break;
       case 0x18:
-        printf("\"Speed mode\": SDR104 speed\n");
+        json_object_push(j, "Speed mode", json_string_new("SDR104 speed"));
         break;
       }
       switch (data_in[87]) {
       case 0x00:
-        printf("\"Bus width\": 1 bit\n");
+        json_object_push(j, "Bus width", json_string_new("1 bit"));
         break;
       case 0x10:
-        printf("\"Bus width\": 4 bits\n");
+        json_object_push(j, "Bus width", json_string_new("4 bits"));
         break;
       }
-      printf("\"User area spare blocks cnt\": %d,\n", nwordbe_to_int(data_in, 88, 4));
-      printf("\"System area spare blocks cnt\": %d,\n", nwordbe_to_int(data_in, 92, 4));
-      printf("\"User area runtime bad blocks cnt\": %d,\n", nwordbe_to_int(data_in, 96, 4));
-      printf("\"System area runtime bad blocks cnt\": %d,\n", nwordbe_to_int(data_in, 100, 4));
-      printf("\"User area refresh cnt\": %d,\n", nwordbe_to_int(data_in, 104, 4));
-      printf("\"System area refresh cnt\": %d,\n", nwordbe_to_int(data_in, 108, 4));
-      printf("\"Interface crc cnt\": %d,\n", nwordbe_to_int(data_in, 112, 4));
-      printf("\"Power cycle cnt\": %d,\n", nwordbe_to_int(data_in, 116, 4));
+      json_object_push(j, "User area spare blocks cnt", json_integer_new(nwordbe_to_int(data_in, 88, 4)));
+      json_object_push(j, "System area spare blocks cnt", json_integer_new(nwordbe_to_int(data_in, 92, 4)));
+      json_object_push(j, "User area runtime bad blocks cnt", json_integer_new(nwordbe_to_int(data_in, 96, 4)));
+      json_object_push(j, "System area runtime bad blocks cnt", json_integer_new(nwordbe_to_int(data_in, 100, 4)));
+      json_object_push(j, "User area refresh cnt", json_integer_new(nwordbe_to_int(data_in, 104, 4)));
+      json_object_push(j, "System area refresh cnt", json_integer_new(nwordbe_to_int(data_in, 108, 4)));
+      json_object_push(j, "Interface crc cnt", json_integer_new(nwordbe_to_int(data_in, 112, 4)));
+      json_object_push(j, "Power cycle cnt", json_integer_new(nwordbe_to_int(data_in, 116, 4)));
       close(fd);
-      printf("\"success\":true\n}\n");
+      json_object_push(j, "success", json_boolean_new(1));
       exit(0);
     }
   }
 
   if (ret == 0) {
-    printf("\"read_via_cmd56_arg_1\":\"read successful but signature 0x%x 0x%x\",\n", data_in[0], data_in[1]);
+    json_object_push(j, "read_via_cmd56_arg_1", json_sprintf_new("read successful but signature 0x%x 0x%x", data_in[0], data_in[1]));
   } else {
-    printf("\"read_via_cmd56_arg_1\":\"not implemented: %s\",\n", strerror(errno));
+    json_object_push(j, "read_via_cmd56_arg_1", json_sprintf_new("not implemented: %s", strerror(errno)));
   }
 
   verbose1("Trying 2step...\n");
@@ -498,8 +542,7 @@ int main(int argc, const char *argv[]) {
   cmd56_arg = 0x00000010; // all other are 0
   ret = CMD56_write(fd, cmd56_arg);
   if (ret) {
-    printf("\"error1\":\"1st CMD56 CALL FAILED: %s\",\n", strerror(errno));
-    // printf("\"error\":\"1st CMD56 CALL FAILED: %s\"\n}\n", strerror(errno));
+    json_object_push(j, "error1", json_sprintf_new("1st CMD56 CALL FAILED: %s", strerror(errno)));
     // exit(1);
   }
 
@@ -511,7 +554,8 @@ int main(int argc, const char *argv[]) {
   cmd56_arg = 0x00000021;
   ret = CMD56_data_in(fd, cmd56_arg, data_in);
   if (ret) {
-    printf("\"error2\":\"2nd CMD56 CALL FAILED: %s\"\n}\n", strerror(errno));
+    json_object_push(j, "error2", json_sprintf_new("2nd CMD56 CALL FAILED: %s", strerror(errno)));
+    json_print_and_free(j);
     exit(1);
   }
 
@@ -531,7 +575,7 @@ int main(int argc, const char *argv[]) {
 
   // printf("\"badBlockReplaceMaximum\": [\"0x%02x\",\"0x%02x\"],\n", data_in[16], data_in[17]);
   // badBlockReplaceMaximum is spareBlockCount
-  printf("\"spareBlockCount\": %d,\n", (int)((data_in[16] << 8) + data_in[17]));
+  json_object_push(j, "spareBlockCount", json_integer_new((int)((data_in[16] << 8) + data_in[17])));
 
   //  printf("\"badBlockCountPerDie1\": "
   //         "[\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\","
@@ -551,29 +595,26 @@ int main(int argc, const char *argv[]) {
   sum = 0;
   for (i = 32; i < 64; i++)
     sum += data_in[i];
-  printf("\"initialBadBlockCount\": %ld,\n", sum);
+  json_object_push(j, "initialBadBlockCount", json_integer_new(sum));
 
   // printf("\"goodBlockRatePercentBytes\": [\"0x%02x\",\"0x%02x\"],\n", data_in[64], data_in[65]);
   // printf("\"goodBlockRatePercent\": %d,\n", (int)((data_in[64]<<8)+data_in[65]));
-  printf("\"goodBlockRatePercent\": %2.2f,\n", (float)((float)((int)((data_in[64] << 8) + data_in[65])) / 100));
+  json_object_push(j, "goodBlockRatePercent", json_double_new((double)((double)((int)((data_in[64] << 8) + data_in[65])) / 100.0)));
 
-  printf("\"totalEraseCount\": %ld,\n", (long)((data_in[80] << 24) + (data_in[81] << 16) + (data_in[82] << 8) + data_in[83]));
+  json_object_push(j, "totalEraseCount", json_integer_new(nword_to_int(data_in, 80, 4)));
 
   // printf("\"enduranceRemainLifePercentBytes\": [\"0x%02x\",\"0x%02x\"],\n", data_in[96], data_in[97]);
   // printf("\"enduranceRemainLifePercent\": %d,\n", (int)((data_in[96]<<8)+data_in[97]));
-  printf("\"enduranceRemainLifePercent\": %2.2f,\n", (float)((float)((int)((data_in[96] << 8) + data_in[97])) / 100));
+  json_object_push(j, "enduranceRemainLifePercent", json_double_new((double)((double)((int)((data_in[96] << 8) + data_in[97])) / 100.0)));
 
-  printf("\"avgEraseCount\": %ld,\n", (long)((data_in[104] << 24) + (data_in[105] << 16) + (data_in[98] << 8) + data_in[99]));
-  printf("\"minEraseCount\": %ld,\n", (long)((data_in[106] << 24) + (data_in[107] << 16) + (data_in[100] << 8) + data_in[101]));
-  printf("\"maxEraseCount\": %ld,\n", (long)((data_in[108] << 24) + (data_in[109] << 16) + (data_in[102] << 8) + data_in[103]));
+  json_object_push(j, "avgEraseCount", json_integer_new((long)((data_in[104] << 24) + (data_in[105] << 16) + (data_in[98] << 8) + data_in[99])));
+  json_object_push(j, "minEraseCount", json_integer_new((long)((data_in[106] << 24) + (data_in[107] << 16) + (data_in[100] << 8) + data_in[101])));
+  json_object_push(j, "maxEraseCount", json_integer_new((long)((data_in[108] << 24) + (data_in[109] << 16) + (data_in[102] << 8) + data_in[103])));
 
-  printf("\"powerUpCount\": %ld,\n", (long)((data_in[112] << 24) + (data_in[113] << 16) + (data_in[114] << 8) + data_in[115]));
-  printf("\"abnormalPowerOffCount\": %d,\n", (int)((data_in[128] << 8) + data_in[129]));
-  printf("\"totalRefreshCount\": %d,\n", (int)((data_in[160] << 8) + data_in[161]));
-  printf("\"productMarker\": "
-         "[\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\","
-         "\"0x%02x\",\"0x%02x\"],\n",
-         data_in[176], data_in[177], data_in[178], data_in[179], data_in[180], data_in[181], data_in[182], data_in[183]);
+  json_object_push(j, "powerUpCount", json_integer_new(nword_to_int(data_in, 112, 4)));
+  json_object_push(j, "abnormalPowerOffCount", json_integer_new((int)((data_in[128] << 8) + data_in[129])));
+  json_object_push(j, "totalRefreshCount", json_integer_new((int)((data_in[160] << 8) + data_in[161])));
+  json_object_push(j, "productMarker", json_array_build("0x%02x", data_in, 176, 8));
   //  printf("\"badBlockCountPerDie2\": "
   //         "[\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\","
   //         "\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\","
@@ -592,10 +633,10 @@ int main(int argc, const char *argv[]) {
   sum = 0;
   for (i = 184; i < 216; i++)
     sum += data_in[i];
-  printf("\"laterBadBlockCount\": %ld,\n", sum);
+  json_object_push(j, "laterBadBlockCount", json_integer_new(sum));
 
   close(fd);
-  printf("\"success\":true\n}\n");
+  json_object_push(j, "success", json_boolean_new(1));
 
   exit(0);
 }
