@@ -335,6 +335,7 @@ int main(int argc, const char *argv[]) {
     json_object_push(j, "powerOnTimes", json_integer_new(bytes_to_int(0, data_in[24], data_in[25], data_in[26])));
     close(fd);
     json_object_push(j, "success", json_boolean_new(1));
+    json_print_and_free(j);
     exit(0);
   }
 
@@ -375,6 +376,7 @@ int main(int argc, const char *argv[]) {
       json_object_push(j, "SLC refresh cnt", json_integer_new((int)((data_in[140] << 24) + (data_in[141] << 16) + (data_in[143] << 8) + data_in[144])));
       close(fd);
       json_object_push(j, "success", json_boolean_new(1));
+      json_print_and_free(j);
       exit(0);
     }
   }
@@ -443,6 +445,7 @@ int main(int argc, const char *argv[]) {
 
       close(fd);
       json_object_push(j, "success", json_boolean_new(1));
+      json_print_and_free(j);
       exit(0);
     }
   }
@@ -461,6 +464,7 @@ int main(int argc, const char *argv[]) {
       json_object_push(j, "SLC area utilization", json_integer_new((int)(data_in[9])));
       close(fd);
       json_object_push(j, "success", json_boolean_new(1));
+      json_print_and_free(j);
       exit(0);
     }
   }
@@ -527,6 +531,7 @@ int main(int argc, const char *argv[]) {
       json_object_push(j, "Power cycle cnt", json_integer_new(nwordbe_to_int(data_in, 116, 4)));
       close(fd);
       json_object_push(j, "success", json_boolean_new(1));
+      json_print_and_free(j);
       exit(0);
     }
   }
@@ -633,6 +638,6 @@ int main(int argc, const char *argv[]) {
 
   close(fd);
   json_object_push(j, "success", json_boolean_new(1));
-
+  json_print_and_free(j);
   exit(0);
 }
