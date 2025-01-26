@@ -474,7 +474,7 @@ int main(int argc, const char *argv[]) {
     json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
 
     if (data_in[0] == 0x53 && data_in[1] == 0x77) {
-      printf("\"Swissbit\":\"true\",\n");
+      json_object_push(j, "Swissbit", json_boolean_new(1));
       strncpy(tmpstr, (char *)&data_in[32], 16);
       tmpstr[16] = 0;
       json_object_push(j, "fwVersion", json_string_new(tmpstr));
@@ -564,14 +564,10 @@ int main(int argc, const char *argv[]) {
   //  dump_data_block(data_in);
   //  printf("\",\n");
 
-  printf("\"flashId\": "
-         "[\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\","
-         "\"0x%02x\",\"0x%02x\",\"0x%02x\"],\n",
-         data_in[0], data_in[1], data_in[2], data_in[3], data_in[4], data_in[5], data_in[6], data_in[7], data_in[8]);
-  printf("\"icVersion\": [\"0x%02x\",\"0x%02x\"],\n", data_in[9], data_in[10]);
-  printf("\"fwVersion\": [%02d,%02d],\n", data_in[11],
-         data_in[12]); // show in decimal
-  printf("\"ceNumber\": \"0x%02x\",\n", data_in[14]);
+   json_object_push(j, "flashId", json_array_build("0x%02x", data_in, 0, 9));
+   json_object_push(j, "icVersion", json_array_build("0x%02x", data_in, 9, 2));
+   json_object_push(j, "fwVersion", json_array_build("%02d", data_in, 11, 2)); // show in decimal
+   json_object_push(j, "ceNumber", json_sprintf_new("0x%02x", data_in[14]));
 
   // printf("\"badBlockReplaceMaximum\": [\"0x%02x\",\"0x%02x\"],\n", data_in[16], data_in[17]);
   // badBlockReplaceMaximum is spareBlockCount
