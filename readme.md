@@ -148,6 +148,17 @@ sudo ./sdmon /dev/mmcblk0
 }
 ```
 
+### Known non-working SD cards list
+
+Although it's impossible to maintain an exhaustive and up-to-date list, here is a list of SD cards that are known NOT to be working at the time they were tested, with the available knowledge at the time.
+
+- Sandisk High Endurance (2025): doesn't answer to CMD56 at all (timeout)
+- Sandisk Max Endurance (2025): doesn't answer to CMD56 at all (timeout)
+- Samsung Pro Endurance (2025): doesn't answer to CMD56 at all (timeout)
+- Transcend High Endurance (2025): answers a 0x00-filled block to known CMD56 arg1 values. Bruteforced all possible arg1 values (with bit0 == 1), none found returning anything else than a zero-filled block, except 0x11111111 returning static-data with 2 useless strings.
+
+Additionally, it is believed that none of the classical (non-"endurance" non-"industrial") widely available consumer-grade models will ever support any type of health query, so they're omitted from this list.
+
 ## Licenses
 
 This project uses the [json](https://github.com/json-parser/json-parser) and [json-builder](https://github.com/json-parser/json-builder) libraries, licensed under the BSD-2-Clause License. Their .c and .h source files have simply been added untouched to the source tree, as suggested in their readme file. The headers of these files contain more details about the license.
