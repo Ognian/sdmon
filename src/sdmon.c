@@ -735,6 +735,21 @@ int main(int argc, char* const* argv) {
       exit(1);
     }
 
+    // if opt_addTime has not been specified, and the returned block is invalid (filled with 0x00 of 0xFF),
+    // then try to sleep and re-issue the command, just in case
+    if (!opt_addTime && !is_data_valid(data_in)) {
+      verbose2("Returned block is empty, trying to sleep and re-issue the command...");
+      usleep(1000000);
+
+      cmd56_arg = 0x00000021;
+      ret = CMD56_data_in(fd, cmd56_arg, data_in, opt_input_file, opt_output_file);
+      if (ret) {
+        json_object_push(j, "error2", json_sprintf_new("2nd CMD56 CALL FAILED: %s", strerror(errno)));
+        json_print_and_free(j);
+        exit(1);
+      }
+    }
+
     json_object_push(j, "flashId", json_array_build("0x%02x", data_in, 0, 9));
     json_object_push(j, "icVersion", json_array_build("0x%02x", data_in, 9, 2));
     json_object_push(j, "fwVersion", json_array_build("%02d", data_in, 11, 2)); // show in decimal
