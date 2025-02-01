@@ -155,8 +155,17 @@ int CMD56_data_in(int fd, int cmd56_arg, unsigned char *lba_block_data, const ch
   return ret;
 }
 
-bool is_header_valid(unsigned char *data) {
-    return !((data[0] == 0xff && data[1] == 0xff) || (data[0] == 0x00 && data[1] == 0x00));
+// returns false if the whole block is only 0x00 or 0xFF
+bool is_data_valid(unsigned char *data) {
+  bool only00 = true;
+  bool onlyff = true;
+  for (int i = 0; i < SD_BLOCK_SIZE && (only00 || onlyff); i++) {
+    if (data[i] != 0x00)
+      only00 = false;
+    else if (data[i] != 0xff)
+      onlyff = false;
+  }
+  return (!only00 && !onlyff);
 }
 
 int CMD56_write(int fd, int cmd56_arg) {
@@ -426,7 +435,7 @@ int main(int argc, char* const* argv) {
     ret = CMD56_data_in(fd, cmd56_arg, data_in, opt_input_file, opt_output_file);
     cmd56_arg1_tried = true;
     // we assume success when the call was successful AND the signature is not 0xff 0xff
-    if (ret == 0 && (opt_force || is_header_valid(data_in))) {
+    if (ret == 0 && (opt_force || is_data_valid(data_in))) {
       json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
 
       if (data_in[0] == 0x70 && data_in[1] == 0x58) {
@@ -487,7 +496,7 @@ int main(int argc, char* const* argv) {
     ret = CMD56_data_in(fd, cmd56_arg, data_in, opt_input_file, opt_output_file);
     cmd56_arg1_tried = true;
     // we assume success when the call was successful AND the signature is not 0xff 0xff
-    if (ret == 0 && (opt_force || is_header_valid(data_in))) {
+    if (ret == 0 && (opt_force || is_data_valid(data_in))) {
       json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
       if (data_in[0] == 0x09 && data_in[1] == 0x41) {
         json_object_push(j, "Adata", json_boolean_new(1));
@@ -532,7 +541,7 @@ int main(int argc, char* const* argv) {
     ret = CMD56_data_in(fd, cmd56_arg, data_in, opt_input_file, opt_output_file);
     cmd56_arg1_tried = true;
     // we assume success when the call was successful AND the signature is not 0xff 0xff
-    if (ret == 0 && (opt_force || is_header_valid(data_in))) {
+    if (ret == 0 && (opt_force || is_data_valid(data_in))) {
       json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
       if (data_in[0] == 0x54 && data_in[1] == 0x72) {
         json_object_push(j, "Transcend", json_boolean_new(1));
@@ -604,7 +613,7 @@ int main(int argc, char* const* argv) {
     ret = CMD56_data_in(fd, cmd56_arg, data_in, opt_input_file, opt_output_file);
     cmd56_arg1_tried = true;
     // we assume success when the call was successful AND the signature is not 0xff 0xff
-    if (ret == 0 && (opt_force || is_header_valid(data_in))) {
+    if (ret == 0 && (opt_force || is_data_valid(data_in))) {
       json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
       if (data_in[0] == 0x4d && data_in[1] == 0x45) {
         json_object_push(j, "Micron", json_boolean_new(1));
@@ -626,7 +635,7 @@ int main(int argc, char* const* argv) {
     ret = CMD56_data_in(fd, cmd56_arg, data_in, opt_input_file, opt_output_file);
     cmd56_arg1_tried = true;
     // we assume success when the call was successful AND the signature is not 0xff 0xff
-    if (ret == 0 && (opt_force || is_header_valid(data_in))) {
+    if (ret == 0 && (opt_force || is_data_valid(data_in))) {
       json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
 
       if (data_in[0] == 0x53 && data_in[1] == 0x77) {
