@@ -2,8 +2,8 @@
 
 #VERSION = 0.01
 CC      = /usr/bin/gcc
-CFLAGS  = -Wall -g -D_REENTRANT -DVERSION="\"$(VERSION_STRING)\"" -I. -static
-LDFLAGS = -lm
+CFLAGS  = -Wall -g -D_REENTRANT -DVERSION="\"$(VERSION_STRING)\"" -I. -ffunction-sections
+LDFLAGS = -lm -Wl,--gc-sections -static
 
 OBJ = sdmon.o json.o json-builder.o
 BIN = sdmon
