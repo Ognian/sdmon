@@ -214,31 +214,22 @@ int CMD56_write(int fd, int cmd56_arg) {
   return ret;
 }
 
-// convert Big Endian ordered bytes to int
-int bytes_to_int(unsigned char byte1, unsigned char byte2, unsigned char byte3, unsigned char byte4) { return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4; }
-
 // convert Little Endian words to int
 json_int_t nword_to_int(unsigned char *data, int offset, int size) {
-  if (size == 4) {
-    return ((data[offset + 3] << 24) | (data[offset + 2] << 16) | (data[offset + 1] << 8) | data[offset]);
-  } else if (size == 8) {
-    return (((long long)data[offset + 7] << 56) | ((long long)data[offset + 6] << 48) | ((long long)data[offset + 5] << 40) | ((long long)data[offset + 4] << 32) |
-            ((long long)data[offset + 3] << 24) | ((long long)data[offset + 2] << 16) | ((long long)data[offset + 1] << 8) | (long long)data[offset]);
-  } else {
-    return -1;
+  uint64_t v = 0;
+  for (int i = 0; i < size; i++) {
+    v |= (uint64_t)data[offset + i] << (i * 8);
   }
+  return v;
 }
 
 // convert Big Endian words to int
 json_int_t nwordbe_to_int(unsigned char *data, int offset, int size) {
-  if (size == 4) {
-    return ((data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3]);
-  } else if (size == 8) {
-    return (((long long)data[offset] << 56) | ((long long)data[offset + 1] << 48) | ((long long)data[offset + 2] << 40) | ((long long)data[offset + 3] << 32) |
-            ((long long)data[offset + 4] << 24) | ((long long)data[offset + 5] << 16) | ((long long)data[offset + 6] << 8) | (long long)data[offset + 7]);
-  } else {
-    return -1;
+  uint64_t v = 0;
+  for (int i = 0; i < size; i++) {
+    v |= (uint64_t)data[offset + i] << ((size - i - 1) * 8);
   }
+  return v;
 }
 
 // take a json_value, print it and free it
@@ -481,7 +472,7 @@ int main(int argc, char* const* argv) {
       strncpy(tmpstr, (char *)&data_in[49], 32);
       tmpstr[32] = 0;
       json_object_push(j, "productString", json_string_new(tmpstr));
-      json_object_push(j, "powerOnTimes", json_integer_new(bytes_to_int(0, data_in[24], data_in[25], data_in[26])));
+      json_object_push(j, "powerOnTimes", json_integer_new(nwordbe_to_int(data_in, 23, 3)));
       close(fd);
       json_object_push(j, "success", json_boolean_new(1));
       json_print_and_free(j);
@@ -591,8 +582,8 @@ int main(int argc, char* const* argv) {
         json_object_push(j, "Average erase cnt", json_integer_new((long)((data_in[47] << 24) + (data_in[46] << 16) + (data_in[45] << 8) + data_in[44])));
 
         json_object_push(j, "Remaining card life", json_sprintf_new("%d%%", (int)(data_in[70])));
-        json_object_push(j, "Total write CRC cnt", json_integer_new(bytes_to_int(data_in[72], data_in[73], data_in[74], data_in[75])));
-        json_object_push(j, "Power cycle cnt", json_integer_new(bytes_to_int(0, 0, data_in[76], data_in[77])));
+        json_object_push(j, "Total write CRC cnt", json_integer_new(nwordbe_to_int(data_in, 72, 4)));
+        json_object_push(j, "Power cycle cnt", json_integer_new(nwordbe_to_int(data_in, 76, 2)));
 
         json_object_push(j, "NAND flash ID", json_sprintf_new("0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x", data_in[80], data_in[81], data_in[82], data_in[83], data_in[84], data_in[85]));
         json_object_push(j, "IC", json_sprintf_new("%c%c%c%c%c%c%c%c", data_in[87], data_in[88], data_in[89], data_in[90], data_in[91], data_in[92], data_in[93], data_in[94]));
@@ -751,7 +742,7 @@ int main(int argc, char* const* argv) {
 
     // printf("\"badBlockReplaceMaximum\": [\"0x%02x\",\"0x%02x\"],\n", data_in[16], data_in[17]);
     // badBlockReplaceMaximum is spareBlockCount
-    json_object_push(j, "spareBlockCount", json_integer_new((int)((data_in[16] << 8) + data_in[17])));
+    json_object_push(j, "spareBlockCount", json_integer_new(nwordbe_to_int(data_in, 16, 2)));
 
     //  printf("\"badBlockCountPerDie1\": "
     //         "[\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\","
@@ -775,21 +766,19 @@ int main(int argc, char* const* argv) {
 
     // printf("\"goodBlockRatePercentBytes\": [\"0x%02x\",\"0x%02x\"],\n", data_in[64], data_in[65]);
     // printf("\"goodBlockRatePercent\": %d,\n", (int)((data_in[64]<<8)+data_in[65]));
-    json_object_push(j, "goodBlockRatePercent", json_double_new((double)((double)((int)((data_in[64] << 8) + data_in[65])) / 100.0)));
+    json_object_push(j, "goodBlockRatePercent", json_double_new((double)nwordbe_to_int(data_in, 64, 2) / 100.0));
 
-    json_object_push(j, "totalEraseCount", json_integer_new(nword_to_int(data_in, 80, 4)));
+    json_object_push(j, "totalEraseCount", json_integer_new(nwordbe_to_int(data_in, 80, 4)));
 
     // printf("\"enduranceRemainLifePercentBytes\": [\"0x%02x\",\"0x%02x\"],\n", data_in[96], data_in[97]);
     // printf("\"enduranceRemainLifePercent\": %d,\n", (int)((data_in[96]<<8)+data_in[97]));
-    json_object_push(j, "enduranceRemainLifePercent", json_double_new((double)((double)((int)((data_in[96] << 8) + data_in[97])) / 100.0)));
-
-    json_object_push(j, "avgEraseCount", json_integer_new((long)((data_in[104] << 24) + (data_in[105] << 16) + (data_in[98] << 8) + data_in[99])));
-    json_object_push(j, "minEraseCount", json_integer_new((long)((data_in[106] << 24) + (data_in[107] << 16) + (data_in[100] << 8) + data_in[101])));
-    json_object_push(j, "maxEraseCount", json_integer_new((long)((data_in[108] << 24) + (data_in[109] << 16) + (data_in[102] << 8) + data_in[103])));
-
-    json_object_push(j, "powerUpCount", json_integer_new(nword_to_int(data_in, 112, 4)));
-    json_object_push(j, "abnormalPowerOffCount", json_integer_new((int)((data_in[128] << 8) + data_in[129])));
-    json_object_push(j, "totalRefreshCount", json_integer_new((int)((data_in[160] << 8) + data_in[161])));
+    json_object_push(j, "enduranceRemainLifePercent", json_double_new((double)nwordbe_to_int(data_in, 96, 2) / 100.0));
+    json_object_push(j, "avgEraseCount", json_integer_new((nwordbe_to_int(data_in, 104, 2) << 16) + nwordbe_to_int(data_in, 98, 2)));
+    json_object_push(j, "minEraseCount", json_integer_new((nwordbe_to_int(data_in, 106, 2) << 16) + nwordbe_to_int(data_in, 100, 2)));
+    json_object_push(j, "maxEraseCount", json_integer_new((nwordbe_to_int(data_in, 108, 2) << 16) + nwordbe_to_int(data_in, 102, 2)));
+    json_object_push(j, "powerUpCount", json_integer_new(nwordbe_to_int(data_in, 112, 4)));
+    json_object_push(j, "abnormalPowerOffCount", json_integer_new(nwordbe_to_int(data_in, 128, 2)));
+    json_object_push(j, "totalRefreshCount", json_integer_new(nwordbe_to_int(data_in, 160, 2)));
     json_object_push(j, "productMarker", json_array_build("0x%02x", data_in, 176, 8));
     //  printf("\"badBlockCountPerDie2\": "
     //         "[\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\",\"0x%02x\","
