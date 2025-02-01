@@ -215,7 +215,7 @@ int CMD56_write(int fd, int cmd56_arg) {
 }
 
 // convert Little Endian words to int
-json_int_t nword_to_int(unsigned char *data, int offset, int size) {
+json_int_t nwordle_to_int(unsigned char *data, int offset, int size) {
   uint64_t v = 0;
   for (int i = 0; i < size; i++) {
     v |= (uint64_t)data[offset + i] << (i * 8);
@@ -431,18 +431,18 @@ int main(int argc, char* const* argv) {
 
       if (data_in[0] == 0x70 && data_in[1] == 0x58) {
         json_object_push(j, "Longsys", json_boolean_new(1));
-        json_object_push(j, "SMARTVersions", json_integer_new(nword_to_int(data_in, 4, 4)));
-        json_object_push(j, "sizeOfDevSMART", json_integer_new(nword_to_int(data_in, 12, 4)));
-        json_object_push(j, "originalBadBlock", json_integer_new(nword_to_int(data_in, 16, 4)));
-        json_object_push(j, "increaseBadBlock", json_integer_new(nword_to_int(data_in, 20, 4)));
-        json_object_push(j, "writeAllSectNum", json_integer_new(nword_to_int(data_in, 24, 8)));
-        json_object_push(j, "replaceBlockLeft", json_integer_new(nword_to_int(data_in, 32, 4)));
-        json_object_push(j, "degreeOfWear", json_sprintf_new("%.02f Cycle", (float)nword_to_int(data_in, 36, 4) / 1000.0));
-        json_object_push(j, "sectorTotal", json_integer_new(nword_to_int(data_in, 40, 4)));
-        json_object_push(j, "remainLifeTime", json_sprintf_new("%" PRId64 "%%", nword_to_int(data_in, 44, 4)));
-        json_object_push(j, "remainWrGBNum", json_sprintf_new("%.02fTB", (float)nword_to_int(data_in, 48, 4) / 1024));
-        json_object_push(j, "lifeTimeTotal", json_sprintf_new("%.02f Cycle", (float)nword_to_int(data_in, 52, 4)));
-        json_object_push(j, "phyWrGBNum", json_sprintf_new("%.02fTB", (float)nword_to_int(data_in, 56, 4) / 1024));
+        json_object_push(j, "SMARTVersions", json_integer_new(nwordle_to_int(data_in, 4, 4)));
+        json_object_push(j, "sizeOfDevSMART", json_integer_new(nwordle_to_int(data_in, 12, 4)));
+        json_object_push(j, "originalBadBlock", json_integer_new(nwordle_to_int(data_in, 16, 4)));
+        json_object_push(j, "increaseBadBlock", json_integer_new(nwordle_to_int(data_in, 20, 4)));
+        json_object_push(j, "writeAllSectNum", json_integer_new(nwordle_to_int(data_in, 24, 8)));
+        json_object_push(j, "replaceBlockLeft", json_integer_new(nwordle_to_int(data_in, 32, 4)));
+        json_object_push(j, "degreeOfWear", json_sprintf_new("%.02f Cycle", (float)nwordle_to_int(data_in, 36, 4) / 1000.0));
+        json_object_push(j, "sectorTotal", json_integer_new(nwordle_to_int(data_in, 40, 4)));
+        json_object_push(j, "remainLifeTime", json_sprintf_new("%" PRId64 "%%", nwordle_to_int(data_in, 44, 4)));
+        json_object_push(j, "remainWrGBNum", json_sprintf_new("%.02fTB", (float)nwordle_to_int(data_in, 48, 4) / 1024));
+        json_object_push(j, "lifeTimeTotal", json_sprintf_new("%.02f Cycle", (float)nwordle_to_int(data_in, 52, 4)));
+        json_object_push(j, "phyWrGBNum", json_sprintf_new("%.02fTB", (float)nwordle_to_int(data_in, 56, 4) / 1024));
 
         close(fd);
         json_object_push(j, "success", json_boolean_new(1));
@@ -828,8 +828,8 @@ int main(int argc, char* const* argv) {
       json_object_push(j, "undocumented320", json_integer_new(nwordbe_to_int(data_in, 320, 4)));
       json_object_push(j, "undocumented324", json_integer_new(nwordbe_to_int(data_in, 324, 4)));
 
-      json_object_push(j, "nbSectorsWritten", json_integer_new(nwordbe_to_int(data_in, 328, 4))); // found scrutating real-life data
-      json_object_push(j, "bytesWritten", json_integer_new(nwordbe_to_int(data_in, 328, 4) << 9)); // found scrutating real-life data
+      json_object_push(j, "sectorsWrittenCount", json_integer_new(nwordbe_to_int(data_in, 328, 4))); // found scrutating real-life data
+      json_object_push(j, "bytesWrittenCount", json_integer_new(nwordbe_to_int(data_in, 328, 4) << 9)); // found scrutating real-life data
 
       json_object_push(j, "undocumented332", json_integer_new(nwordbe_to_int(data_in, 332, 4)));
     }
