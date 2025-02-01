@@ -815,6 +815,25 @@ int main(int argc, char* const* argv) {
       sum += data_in[i];
     json_object_push(j, "laterBadBlockCount", json_integer_new(sum));
 
+    // This seems to be the "signature" of Kingston SDCE cards, and there are undocumented fields
+    // that look a lot like 4-bytes long words, and they're incrementing.
+    // So far only the word at offset 328 has been found/guessed.
+    const unsigned char flashIdKingstonSDCE[] = {0x98,0x3e,0xa8,0x03,0x7a,0xe4,0x08,0x16,0x00};
+    if (memcmp(data_in, flashIdKingstonSDCE, sizeof(flashIdKingstonSDCE)) == 0) {
+      json_object_push(j, "undocumented300", json_integer_new(nwordbe_to_int(data_in, 300, 4)));
+      json_object_push(j, "undocumented304", json_integer_new(nwordbe_to_int(data_in, 304, 4)));
+      json_object_push(j, "undocumented308", json_integer_new(nwordbe_to_int(data_in, 308, 4)));
+      json_object_push(j, "undocumented312", json_integer_new(nwordbe_to_int(data_in, 312, 4)));
+      json_object_push(j, "undocumented316", json_integer_new(nwordbe_to_int(data_in, 316, 4)));
+      json_object_push(j, "undocumented320", json_integer_new(nwordbe_to_int(data_in, 320, 4)));
+      json_object_push(j, "undocumented324", json_integer_new(nwordbe_to_int(data_in, 324, 4)));
+
+      json_object_push(j, "nbSectorsWritten", json_integer_new(nwordbe_to_int(data_in, 328, 4))); // found scrutating real-life data
+      json_object_push(j, "bytesWritten", json_integer_new(nwordbe_to_int(data_in, 328, 4) << 9)); // found scrutating real-life data
+
+      json_object_push(j, "undocumented332", json_integer_new(nwordbe_to_int(data_in, 332, 4)));
+    }
+
     close(fd);
     json_object_push(j, "success", json_boolean_new(1));
     json_print_and_free(j);
