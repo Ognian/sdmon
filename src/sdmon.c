@@ -69,7 +69,7 @@ int opt_verbosity = 1;
 #define verbose2(...) if (opt_verbosity >= 2) fprintf(stderr, __VA_ARGS__)
 #define verbose3(...) if (opt_verbosity >= 3) fprintf(stderr, __VA_ARGS__)
 
-const char *allowed_methods = "auto, sandisk, adata, transcend, micron, swissbit, 2step";
+const char *allowed_methods = "auto, sandisk, adata, transcend, micron, swissbit, 2step, innodisk";
 #define METHOD_AUTO 0
 #define METHOD_SANDISK 1
 #define METHOD_ADATA 2
@@ -77,6 +77,7 @@ const char *allowed_methods = "auto, sandisk, adata, transcend, micron, swissbit
 #define METHOD_MICRON 4
 #define METHOD_SWISSBIT 5
 #define METHOD_2STEP 6
+#define METHOD_INNODISK 7
 
 // CMD56 implementation
 #define SD_GEN_CMD 56
@@ -353,6 +354,8 @@ int main(int argc, char* const* argv) {
           opt_method = METHOD_SWISSBIT;
         else if (strcmp(optarg, "2step") == 0)
           opt_method = METHOD_2STEP;
+        else if (strcmp(optarg, "innodisk") == 0)
+          opt_method = METHOD_INNODISK;
         else {
           verbose0("Invalid option to -m (%s), expected one of: %s.\n", optarg, allowed_methods);
           json_builder_free(j);
@@ -477,6 +480,76 @@ int main(int argc, char* const* argv) {
       json_object_push(j, "success", json_boolean_new(1));
       json_print_and_free(j);
       exit(0);
+    }
+  }
+
+  if (opt_method == METHOD_AUTO || opt_method == METHOD_INNODISK) {
+    // try innodisk argument
+    verbose1("Trying innodisk...\n");
+    cmd56_arg = 0x110005fd;
+    ret = CMD56_data_in(fd, cmd56_arg, data_in, opt_input_file, opt_output_file);
+
+    // we assume success when the call was successful AND the signature is not 0xff 0xff
+    if (ret == 0 && (opt_force || is_data_valid(data_in))) {
+      json_object_push(j, "signature", json_sprintf_new("0x%x 0x%x", data_in[0], data_in[1]));
+      if (data_in[0] == 0x4c && data_in[1] == 0x58) {
+        json_object_push(j, "Innodisk", json_boolean_new(1));
+        switch (data_in[16]) {
+        case 0x00:
+          json_object_push(j, "Bus width", json_string_new("1 bit"));
+          break;
+        case 0x10:
+          json_object_push(j, "Bus width", json_string_new("4 bits"));
+          break;
+        }
+        switch (data_in[18]) {
+        case 0x00:
+          json_object_push(j, "Speed mode", json_string_new("Class 0"));
+          break;
+        case 0x01:
+          json_object_push(j, "Speed mode", json_string_new("Class 2"));
+          break;
+        case 0x02:
+          json_object_push(j, "Speed mode", json_string_new("Class 4"));
+          break;
+        case 0x03:
+          json_object_push(j, "Speed mode", json_string_new("Class 6"));
+          break;
+        case 0x04:
+          json_object_push(j, "Speed mode", json_string_new("Class 10"));
+          break;
+        }
+        switch (data_in[19]) {
+        case 0x00:
+          json_object_push(j, "UHS speed grade", json_string_new("Less than 10MB/s"));
+          break;
+        case 0x01:
+          json_object_push(j, "UHS speed grade", json_string_new("10MB/s and higher"));
+          break;
+        case 0x03:
+          json_object_push(j, "UHS speed grade", json_string_new("30MB/s and higher"));
+          break;
+        default:
+          json_object_push(j, "UHS speed grade", json_sprintf_new("Unknown: 0x%x", data_in[19]));
+          break;
+        }
+        json_object_push(j, "Total spare blocks cnt", json_integer_new((int)(data_in[24])));
+        json_object_push(j, "Factory bad blocks cnt", json_integer_new((int)(data_in[25])));
+        json_object_push(j, "Runtime bad blocks cnt", json_integer_new((int)(data_in[26])));
+        json_object_push(j, "Spare utilization rate", json_integer_new((int)(data_in[27])));
+        json_object_push(j, "SPOR failure cnt", json_integer_new(nwordbe_to_int(data_in, 28, 4)));
+        json_object_push(j, "Minimum erase cnt", json_integer_new(nwordbe_to_int(data_in, 32, 4)));
+        json_object_push(j, "Maximum erase cnt", json_integer_new(nwordbe_to_int(data_in, 36, 4)));
+        json_object_push(j, "Total erase cnt", json_integer_new(nwordbe_to_int(data_in, 40, 4)));
+        json_object_push(j, "Average erase cnt", json_integer_new(nwordbe_to_int(data_in, 44, 4)));
+        strncpy(tmpstr, (char *)&data_in[53], 16);
+        tmpstr[16] = 0;
+        json_object_push(j, "FW version", json_string_new(tmpstr));
+        close(fd);
+        json_object_push(j, "success", json_boolean_new(1));
+        json_print_and_free(j);
+        exit(0);
+      }
     }
   }
 
