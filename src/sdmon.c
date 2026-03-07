@@ -409,12 +409,6 @@ int main(int argc, char* const* argv) {
     exit(2);
   }
 
-  /*
-   * With FreeBSD, make sure kern.geom.debugflags sysctl
-   * flag has value of 16. To change, invoke the command
-   * "sysctl kern.geom.debugflags=16" or write it in the
-   * /etc/sysctl.conf.
-   */
   fd = open(device, O_RDWR);
   if (fd < 0) {
     json_object_push(j, "error", json_sprintf_new("device open failed (%s)", strerror(errno)));
