@@ -475,7 +475,7 @@ int main(int argc, char* const* argv) {
       strncpy(tmpstr, (char *)&data_in[49], 32);
       tmpstr[32] = 0;
       json_object_push(j, "productString", json_string_new(tmpstr));
-      json_object_push(j, "powerOnTimes", json_integer_new(nwordbe_to_int(data_in, 23, 3)));
+      json_object_push(j, "powerOnTimes", json_integer_new(nwordbe_to_int(data_in, 24, 3)));
       close(fd);
       json_object_push(j, "success", json_boolean_new(1));
       json_print_and_free(j);
