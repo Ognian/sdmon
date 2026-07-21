@@ -2,15 +2,24 @@
 
 This program reads out the health data of *some* industrial grade SD Cards. Unfortunately there is no standard way of doing this.
 Sdmon uses CMD56 of the SD card specification and currently does this for:
-- [Apacer Industrial SD Cards](https://industrial.apacer.com/en-ww/SSD-Industrial-Card/microSD), and some others from branded distributors
-- [Kingston Industrial SD Cards](https://www.kingston.com/en/memory-cards/industrial-grade-microsd-uhs-i-u3) (SDCIT/32GB and the SDCIT2/32GB where reported to work with the -a option, see Issue #6)
-- [Kingston High Endurance SD Cards](https://www.kingston.com/en/memory-cards/high-endurance-microsd-card) (SDCE, see Issue #30)
-- [SanDisk Industrial SD Cards](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/product/embedded-flash/product-brief/product-brief-western-digital-industrial-sd-microsd.pdf) (code contributed by William Croft)
-- [Western Digital WD Purple SD Cards](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/product/embedded-flash/surveillance-wd-purple-microSD/product-brief-wd-purple-sc-qd101-ultra-endurance-microsd.pdf) (QD101)
 
-Although some of the above cards have been tested, there is no guarantee that a particular card of the above manufacturers will work. 
+## Likely Working SD Cards
+| Card Line | Write Endurance | IOPS | 8G | 16G | 32G | 64G | 128G | 256G | 512G+ | Known Issues/Errata |
+|-----------|-----------------|------|----|-----|-----|-----|-----|------|--------|---------------------|
+| [Apacer Industrial](https://www.apacer.com/en/product/industrial-product/industrialsearch/industrial_ssd/industrial_card/microsd) | 🟢SLC | 🔴No | :white_check_mark: | :x: | :x: |  :x: |  :x: |  :x: | :x: | some models from branded distributors work |
+| [Apacer Industrial](https://www.apacer.com/en/product/industrial-product/industrialsearch/industrial_ssd/industrial_card/microsd) | 🟡MLC | 🟢A2 | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :x: |  :x: |  :x: | :x: | some models from branded distributors work |
+| [Apacer Industrial](https://www.apacer.com/en/product/industrial-product/industrialsearch/industrial_ssd/industrial_card/microsd) | 🔴TLC | 🟢A2  | :x: | :white_check_mark: | :white_check_mark: |  :white_check_mark: |  :white_check_mark: |  :white_check_mark: | :white_check_mark: | some models from branded distributors work |
+| [Kingston High Endurance](https://www.kingston.com/en/memory-cards/high-endurance-microsd-card) | 🔴TLC | 🟡A1 | :x: | :x: | :white_check_mark: |  :white_check_mark: |  :white_check_mark: |  :white_check_mark: | :x: | SDCE, see [Issue #30](https://github.com/Ognian/sdmon/issues/30) |
+| [Kingston Industrial](https://www.kingston.com/en/memory-cards/industrial-grade-microsd-uhs-i-u3) | 🔴TLC | 🟡A1 | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: |  :white_check_mark: |  :x: | :x: | SDCIT[2]/32GB may work with `-a` option, see [Issue #6](https://github.com/Ognian/sdmon/issues/30) |
+| [SanDisk Industrial QD334](https://documents.sandisk.com/content/dam/asset-library/en_us/assets/public/western-digital/product/embedded-flash/product-brief/product-brief-western-digital-industrial-sd-microsd.pdf) | 🟢SLC | 🔴No | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: |  :x: |  :x: | :x: | |
+| [SanDisk Industrial  LD332 / QD332](https://documents.sandisk.com/content/dam/asset-library/en_us/assets/public/western-digital/product/embedded-flash/product-brief/product-brief-western-digital-industrial-sd-microsd.pdf) | 🟡MLC | 🔴No | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: |  :white_check_mark: |  :white_check_mark: | :x: | |
+| [WD Purple QD101](https://www.sandisk.com/products/memory-cards/microsd-cards/wd-purple-microsd?sku=WDD032G1P0C-85AEL0) | 🔴TLC | 🔴No | :x: | :x: | :white_check_mark: |  :white_check_mark: |  :white_check_mark: |  :white_check_mark: | :white_check_mark: | very poor write endurance (500 cycles) |
 
-The output of the program is JSON so that it can be parsed easier in applications using sdmon.  
+Although some of the above cards have been tested, there is no guarantee that a particular card of the above manufacturers will work.
+
+For readability, the above chart glosses over temperature grades, WORM, and SD/SDHC distinctions.
+
+The program output is JSON, so it may be easily parsed in other applications. 
 
 ## Installation
 ### Released Version
