@@ -1,6 +1,13 @@
 # (c)2018 ogi-it, Ognian Tschakalov
 
-#VERSION = 0.01
+FILE_PATH = ../freebsd_portversion.txt 
+
+.if exists(${FILE_PATH})
+VERSION_STRING != cat ../freebsd_portversion.txt
+.else
+VERSION_STRING != git describe --always
+.endif
+
 CC      = /usr/bin/cc
 CFLAGS  = -Wall -g -D_REENTRANT -DVERSION="\"$(VERSION_STRING)\"" -I. -static
 LDFLAGS = -lm
